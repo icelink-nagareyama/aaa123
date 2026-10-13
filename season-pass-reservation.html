@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>【接続確認用】プレミアムパス優先予約 | エキサイティングアイスパークin流山</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
 <style>
   :root {
     --brand: #1268AD;
@@ -130,7 +130,7 @@
   </div>
 </div>
 
-<script>
+<p style="text-align:center;color:#08386B;font-size:12px">接続確認版 v2・受付登録は無効</p><script>
 (function () {
   var LIFF_ID = '2011760110-g8MzS4CT';
   var BASE_URL = ''; // 登録を有効にする前に、検証済みの接続先を設定する
@@ -280,37 +280,45 @@
     loadSlotsForSelectedDate();
   }
 
-  if (!LIFF_ID) {
-    showFatal('LIFFの設定が完了していません。管理者にお問い合わせください。（LIFF_ID_SEASON_PASSが未設定です）');
-    return;
-  }
 
-  liff.init({ liffId: LIFF_ID }).then(function () {
-    if (!liff.isLoggedIn()) { liff.login(); return; }
-    showFatal('LINEログインとの接続確認ができました。受付・予約の開始準備中です。');
-    throw new Error('接続確認完了。登録は無効です。');
-    if (!liff.isLoggedIn() && !liff.isInClient()) {
-      liff.login();
-      return null;
-    }
-    return liff.getProfile();
-  }).then(function (profile) {
-    if (!profile || !profile.userId) {
-      showFatal('LINEのプロフィール情報を取得できませんでした。LINEアプリから開き直してください。');
-      return;
-    }
-    return callApi('getMyPremiumPassForLiff', [profile.userId]).then(function (res) {
-      hide($('loadingCard'));
-      if (!res.ok || !res.result) {
-        show($('notMemberCard'));
+  var finished = false;
+  var loadingTimer = setTimeout(function () {
+    if (finished) return;
+    finished = true;
+    showFatal('LINEとの接続が20秒以内に完了しませんでした。LINE DevelopersのEndpoint URLと、このページの公開URLが一致しているか確認してください。画面下の「接続確認版 v2」が見えない場合は古いページです。');
+  }, 20000);
+  function stopWith(message) {
+    if (finished) return;
+    finished = true; clearTimeout(loadingTimer); showFatal(message);
+  }
+  function startLiff() {
+    if (finished) return;
+    if (!window.liff) { stopWith('LINE SDKを読み込めませんでした。通信状態を確認して開き直してください。'); return; }
+    $('loadingCard').textContent = 'LINEの設定を確認中…';
+    Promise.resolve().then(function () { return window.liff.init({ liffId: LIFF_ID }); }).then(function () {
+      if (finished) return;
+      if (window.liff.isLoggedIn()) {
+        stopWith('LINEログインとの接続確認ができました。受付・予約の登録はまだ無効です。');
         return;
       }
-      myPassNo = res.result.passNo;
-      initMain(profile);
+      // 自動で再ログインさせず、本人の操作で開始する。リダイレクトのループを防ぐ。
+      stopWith('LINEへのログインが必要です。「LINEでログイン」を押してください。繰り返し戻る場合はEndpoint URLの設定を確認してください。');
+      var loginButton = document.createElement('button');
+      loginButton.className = 'btn'; loginButton.textContent = 'LINEでログイン';
+      loginButton.addEventListener('click', function () {
+        loginButton.disabled = true;
+        window.liff.login({ redirectUri: window.location.origin + window.location.pathname });
+      });
+      $('fatalCard').appendChild(loginButton);
+    }).catch(function () {
+      stopWith('LINE初期化に失敗しました。LIFF ID・Endpoint URL・公開状態を確認してください。');
     });
-  }).catch(function (e) {
-    if (String(e && e.message).indexOf('接続確認完了') !== 0) showFatal('LINEとの接続に失敗しました。LINEアプリから開き直してください。');
-  });
+  }
+  var sdk = document.createElement('script');
+  sdk.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
+  sdk.async = true; sdk.onload = startLiff;
+  sdk.onerror = function () { stopWith('LINE SDKの取得に失敗しました。通信状態を確認してください。'); };
+  document.head.appendChild(sdk);
 })();
 </script>
 </body>
