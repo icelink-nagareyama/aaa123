@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>【接続確認用】事前受付 | エキサイティングアイスパークin流山</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --brand: #1268AD;
+    --brand-dark: #08386B;
+    --bg: #F3F8FD;
+    --border: #dbe3e8;
+    --danger: #c0392b;
+    --ok: #1a7a4c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: #222;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+  .header { text-align: center; margin-bottom: 20px; }
+  .header .logo { font-size: 15px; color: var(--brand); font-weight: bold; }
+  .header h1 { font-size: 20px; margin: 4px 0 0; color: var(--brand-dark); }
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .center { text-align: center; }
+  .muted { color: #667; font-size: 13px; line-height: 1.6; }
+  label { display: block; font-size: 13px; font-weight: bold; color: #445; margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"], input[type="number"] {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 16px; background: #fff;
+  }
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper input { text-align: center; flex: 1; }
+  .stepper button {
+    width: 42px; height: 42px; border-radius: 8px; border: 1px solid var(--border);
+    background: #fff; font-size: 20px; color: var(--brand-dark); flex-shrink: 0;
+  }
+  .stepper button:active { background: var(--bg); }
+  .fee-box {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--bg);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .fee-box .label { font-size: 13px; color: #556; }
+  .fee-box .amount { font-size: 22px; font-weight: bold; color: var(--brand-dark); }
+  .fee-note { font-size: 11px; color: #889; margin-top: 6px; }
+  .notice {
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    background: #fff6e5; color: #8a5a00; border: 1px solid #f0d9a6; display: none;
+  }
+  .btn {
+    display: block; width: 100%; margin-top: 18px; padding: 14px; border: none; border-radius: 10px;
+    background: var(--brand); color: #fff; font-size: 16px; font-weight: bold; cursor: pointer;
+  }
+  .btn:disabled { background: #9fb0ba; }
+  .btn.secondary { background: #fff; color: var(--brand); border: 1px solid var(--brand); margin-top: 10px; }
+  .error-msg {
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    background: #fdecea; color: var(--danger); border: 1px solid #f5c6c0; display: none;
+  }
+  .ticket-no {
+    font-size: 48px; font-weight: bold; color: var(--brand-dark); letter-spacing: 2px;
+    text-align: center; margin: 6px 0 2px;
+  }
+  .ticket-label { text-align: center; font-size: 13px; color: #667; }
+  .result-list { margin-top: 18px; }
+  .result-list .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .result-list .row:last-child { border-bottom: none; }
+  .spinner {
+    width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--border);
+    border-top-color: var(--brand); margin: 30px auto; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">エキサイティングアイスパークin流山</div>
+    <h1>事前受付（整理番号発行）</h1>
+  </div>
+
+  <div id="loadingCard" class="card center">
+    <div class="spinner"></div>
+    <div class="muted">読み込み中です…</div>
+  </div>
+
+  <div id="fatalCard" class="card hidden">
+    <div class="error-msg" id="fatalMsg" style="display:block;"></div>
+  </div>
+
+  <div id="formCard" class="card hidden">
+    <p class="muted">
+      来場前にご利用人数を送信すると、その場で整理番号を発行します。<br>
+      当日は受付カウンターでこの画面（整理番号）をご提示ください。オプション（手袋・補助具など）や最終的な料金は現地窓口で確定します。
+    </p>
+
+    <label for="customerName">お名前（任意）</label>
+    <input type="text" id="customerName" placeholder="例）流山 太郎">
+
+    <label for="adults">大人（中学生以上）</label>
+    <div class="stepper">
+      <button type="button" data-target="adults" data-delta="-1">−</button>
+      <input type="number" id="adults" inputmode="numeric" value="1" min="0" max="99">
+      <button type="button" data-target="adults" data-delta="1">＋</button>
+    </div>
+
+    <label for="children">子供（小学生以下）</label>
+    <div class="stepper">
+      <button type="button" data-target="children" data-delta="-1">−</button>
+      <input type="number" id="children" inputmode="numeric" value="0" min="0" max="99">
+      <button type="button" data-target="children" data-delta="1">＋</button>
+    </div>
+
+    <div class="fee-box">
+      <span class="label">料金目安</span>
+      <span class="amount" id="feeAmount">¥ -</span>
+    </div>
+    <div class="fee-note">※手袋・補助具・シーズンパス割引等は含みません。実際の金額は現地窓口でご案内します。</div>
+
+    <div class="notice" id="largePartyNotice">10名以上のご利用は、当日スタッフが人数を確認させていただく場合があります。</div>
+
+    <button class="btn" id="submitBtn">整理番号を発行する</button>
+    <div class="error-msg" id="formErrorMsg"></div>
+  </div>
+
+  <div id="resultCard" class="card hidden">
+    <div class="ticket-label">あなたの整理番号</div>
+    <div class="ticket-no" id="resultTicketNo">----</div>
+    <p class="muted center">当日、受付カウンターでこの画面をご提示ください。</p>
+    <div class="result-list">
+      <div class="row"><span>人数</span><span id="resultPartySize">-</span></div>
+    </div>
+    <button class="btn secondary" id="closeBtn">閉じる</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var LIFF_ID = '2011760110-q8jkjXWn';
+  var BASE_URL = ''; // 登録を有効にする前に、検証済みの接続先を設定する
+  var lineUserId = '';
+
+  function $(id) { return document.getElementById(id); }
+  function show(el) { el.classList.remove('hidden'); }
+  function hide(el) { el.classList.add('hidden'); }
+
+  function callApi(action, params) {
+    return Promise.reject(new Error('現在は接続確認用です。受付・予約の登録はまだ有効になっていません。'));
+    return fetch(BASE_URL + '?source=api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // カスタムヘッダーを避けてCORSプリフライトを発生させない
+      body: JSON.stringify({ action: action, params: params }),
+    }).then(function (res) { return res.json(); });
+  }
+
+  function showFatal(message) {
+    hide($('loadingCard'));
+    hide($('formCard'));
+    $('fatalMsg').textContent = message;
+    show($('fatalCard'));
+  }
+
+  function currentCounts() {
+    var adults = Math.max(0, parseInt($('adults').value, 10) || 0);
+    var children = Math.max(0, parseInt($('children').value, 10) || 0);
+    return { adults: adults, children: children };
+  }
+
+  var feeTimer = null;
+  function refreshFeeAndNotice() {
+    clearTimeout(feeTimer);
+    feeTimer = setTimeout(function () {
+      var c = currentCounts();
+      callApi('previewReceptionFee', [{ adults: c.adults, children: c.children }])
+        .then(function (res) {
+          if (res.ok) $('feeAmount').textContent = '¥ ' + res.result.total.toLocaleString();
+        })
+        .catch(function () {});
+      callApi('validatePartySizeInput', [c.adults, c.children])
+        .then(function (res) {
+          if (res.ok && res.result.needsConfirmation) show($('largePartyNotice'));
+          else hide($('largePartyNotice'));
+        })
+        .catch(function () {});
+    }, 250);
+  }
+
+  document.querySelectorAll('.stepper button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = $(btn.getAttribute('data-target'));
+      var delta = parseInt(btn.getAttribute('data-delta'), 10);
+      var next = Math.max(0, Math.min(99, (parseInt(input.value, 10) || 0) + delta));
+      input.value = next;
+      refreshFeeAndNotice();
+    });
+  });
+  $('adults').addEventListener('input', refreshFeeAndNotice);
+  $('children').addEventListener('input', refreshFeeAndNotice);
+
+  $('submitBtn').addEventListener('click', function () {
+    var c = currentCounts();
+    hide($('formErrorMsg'));
+    if (c.adults + c.children <= 0) {
+      $('formErrorMsg').textContent = '人数を入力してください。';
+      show($('formErrorMsg'));
+      return;
+    }
+    $('submitBtn').disabled = true;
+    $('submitBtn').textContent = '送信中…';
+    callApi('submitReceptionRequest', [{
+      adults: c.adults, children: c.children,
+      lineUserId: lineUserId, customerName: $('customerName').value || '',
+    }]).then(function (res) {
+      $('submitBtn').disabled = false;
+      $('submitBtn').textContent = '整理番号を発行する';
+      if (!res.ok) {
+        $('formErrorMsg').textContent = res.error || '送信に失敗しました。時間をおいて再度お試しください。';
+        show($('formErrorMsg'));
+        return;
+      }
+      $('resultTicketNo').textContent = res.result.ticketNo;
+      $('resultPartySize').textContent = res.result.partySize + '名';
+      hide($('formCard'));
+      show($('resultCard'));
+    }).catch(function () {
+      $('submitBtn').disabled = false;
+      $('submitBtn').textContent = '整理番号を発行する';
+      $('formErrorMsg').textContent = '通信に失敗しました。電波状況をご確認のうえ再度お試しください。';
+      show($('formErrorMsg'));
+    });
+  });
+
+  $('closeBtn').addEventListener('click', function () {
+    if (window.liff && liff.isInClient && liff.isInClient()) {
+      liff.closeWindow();
+    } else {
+      $('resultTicketNo').textContent = '----';
+      $('resultPartySize').textContent = '-';
+      hide($('resultCard'));
+      show($('formCard'));
+    }
+  });
+
+  function initForm(profile) {
+    if (profile) {
+      lineUserId = profile.userId;
+      if (profile.displayName) $('customerName').value = profile.displayName;
+    }
+    hide($('loadingCard'));
+    show($('formCard'));
+    refreshFeeAndNotice();
+    maybeShowDebugInfo(profile);
+  }
+
+  /**
+   * 連携確認用デバッグ表示。URLに ?debug=1 を付けた時だけ、取得したuserId等を画面下に表示する
+   * （お客様への配信URLには付けない。動作確認が済んだら気にせず放置してよい＝通常は非表示）。
+   */
+  function maybeShowDebugInfo(profile) {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('debug') !== '1') return;
+      var box = document.createElement('div');
+      box.style.cssText = 'margin-top:16px;padding:10px;border-radius:8px;background:#eef2f4;' +
+        'font-size:11px;color:#556;word-break:break-all;line-height:1.6;';
+      box.innerHTML = '<b>[debug]</b><br>' +
+        'isInClient: ' + (liff.isInClient ? liff.isInClient() : '?') + '<br>' +
+        'isLoggedIn: ' + (liff.isLoggedIn ? liff.isLoggedIn() : '?') + '<br>' +
+        'userId: ' + (profile ? profile.userId : '(profile取得なし)') + '<br>' +
+        'displayName: ' + (profile ? profile.displayName : '-');
+      document.querySelector('.wrap').appendChild(box);
+    } catch (e) {
+      // デバッグ表示の失敗は本来の受付機能に影響させない
+    }
+  }
+
+  if (!LIFF_ID) {
+    showFatal('LIFFの設定が完了していません。管理者にお問い合わせください。（LIFF_ID_RECEPTIONが未設定です）');
+    return;
+  }
+
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    showFatal('LINEログインとの接続確認ができました。受付・予約の開始準備中です。');
+    throw new Error('接続確認完了。登録は無効です。');
+    if (!liff.isLoggedIn() && !liff.isInClient()) {
+      liff.login();
+      return null;
+    }
+    return liff.getProfile().catch(function () { return null; });
+  }).then(function (profile) {
+    initForm(profile);
+  }).catch(function (e) {
+    if (String(e && e.message).indexOf('接続確認完了') !== 0) showFatal('LINEとの接続に失敗しました。LINEアプリから開き直してください。');
+  });
+})();
+</script>
+</body>
+</html>

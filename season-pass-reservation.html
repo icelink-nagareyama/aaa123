@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>【接続確認用】プレミアムパス優先予約 | エキサイティングアイスパークin流山</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --brand: #1268AD;
+    --brand-dark: #08386B;
+    --gold: #a9791f;
+    --bg: #F3F8FD;
+    --border: #dbe3e8;
+    --danger: #c0392b;
+    --ok: #1a7a4c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: #222;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+  .header { text-align: center; margin-bottom: 20px; }
+  .header .logo { font-size: 15px; color: var(--brand); font-weight: bold; }
+  .header h1 { font-size: 19px; margin: 4px 0 0; color: var(--brand-dark); }
+  .badge-premium {
+    display: inline-block; margin-top: 8px; padding: 3px 12px; border-radius: 999px;
+    background: #fbf3e0; color: var(--gold); font-size: 12px; font-weight: bold; border: 1px solid #ecd9a8;
+  }
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .center { text-align: center; }
+  .muted { color: #667; font-size: 13px; line-height: 1.6; }
+  .section-title { font-weight: bold; font-size: 14px; color: var(--brand-dark); margin-bottom: 10px; }
+  label { display: block; font-size: 13px; font-weight: bold; color: #445; margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  input[type="date"] {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 16px; background: #fff;
+  }
+  .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .slot-btn {
+    padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); background: #fff;
+    font-size: 14px; color: var(--brand-dark); text-align: center; cursor: pointer;
+  }
+  .slot-btn .remaining { display: block; font-size: 11px; color: #889; margin-top: 2px; }
+  .slot-btn.selected { border-color: var(--brand); background: #eaf1f5; font-weight: bold; }
+  .slot-btn:disabled { opacity: 0.4; background: #f2f4f5; cursor: not-allowed; }
+  .btn {
+    display: block; width: 100%; margin-top: 18px; padding: 14px; border: none; border-radius: 10px;
+    background: var(--brand); color: #fff; font-size: 16px; font-weight: bold; cursor: pointer;
+  }
+  .btn:disabled { background: #9fb0ba; }
+  .btn.secondary { background: #fff; color: var(--danger); border: 1px solid var(--danger); margin-top: 0; padding: 8px 14px; font-size: 13px; width: auto; }
+  .error-msg {
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    background: #fdecea; color: var(--danger); border: 1px solid #f5c6c0; display: none;
+  }
+  .ok-msg {
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    background: #eaf7ef; color: var(--ok); border: 1px solid #bfe6cd; display: none;
+  }
+  .reservation-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .reservation-row:last-child { border-bottom: none; }
+  .reservation-row .info { line-height: 1.5; }
+  .reservation-row .info .date { font-weight: bold; color: var(--brand-dark); }
+  .reservation-row .info .time { color: #556; font-size: 13px; }
+  .empty-note { font-size: 13px; color: #889; text-align: center; padding: 8px 0; }
+  .spinner {
+    width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--border);
+    border-top-color: var(--brand); margin: 30px auto; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">エキサイティングアイスパークin流山</div>
+    <h1>プレミアムパス優先予約</h1>
+    <span class="badge-premium">PREMIUM専用</span>
+  </div>
+
+  <div id="loadingCard" class="card center">
+    <div class="spinner"></div>
+    <div class="muted">読み込み中です…</div>
+  </div>
+
+  <div id="fatalCard" class="card hidden">
+    <div class="error-msg" id="fatalMsg" style="display:block;"></div>
+  </div>
+
+  <div id="notMemberCard" class="card hidden">
+    <p class="muted">
+      このページはプレミアムパス会員様限定のご予約フォームです。<br><br>
+      現在このLINEアカウントに紐づく有効なプレミアムパスが見つかりませんでした。<br>
+      ・パスをまだお持ちでない場合は、受付窓口でお申込みください。<br>
+      ・すでにお持ちの場合は、ご登録のLINEアカウントに相違ないかスタッフにご確認ください。
+    </p>
+  </div>
+
+  <div id="mainCard" class="hidden">
+    <div class="card">
+      <div class="section-title">ご予約状況</div>
+      <div id="reservationList"></div>
+      <div id="reservationEmpty" class="empty-note hidden">現在、今後のご予約はありません。</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">新しくご予約する</div>
+      <p class="muted">ご予約は翌日以降、同時に3件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。</p>
+
+      <label for="reserveDate">ご希望日</label>
+      <input type="date" id="reserveDate">
+
+      <div id="slotsArea"></div>
+
+      <button class="btn" id="reserveBtn" disabled>この時間でご予約する</button>
+      <div class="error-msg" id="reserveError"></div>
+      <div class="ok-msg" id="reserveOk"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var LIFF_ID = '2011760110-g8MzS4CT';
+  var BASE_URL = ''; // 登録を有効にする前に、検証済みの接続先を設定する
+  var lineUserId = '';
+  var myPassNo = '';
+  var selectedSlot = null;
+
+  function $(id) { return document.getElementById(id); }
+  function show(el) { el.classList.remove('hidden'); }
+  function hide(el) { el.classList.add('hidden'); }
+
+  function callApi(action, params) {
+    return Promise.reject(new Error('現在は接続確認用です。受付・予約の登録はまだ有効になっていません。'));
+    return fetch(BASE_URL + '?source=api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: action, params: params }),
+    }).then(function (res) { return res.json(); });
+  }
+
+  function showFatal(message) {
+    hide($('loadingCard'));
+    $('fatalMsg').textContent = message;
+    show($('fatalCard'));
+  }
+
+  function tomorrowDateStr_() {
+    var d = new Date();
+    d.setDate(d.getDate() + 1);
+    var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function renderReservations(list) {
+    var box = $('reservationList');
+    box.innerHTML = '';
+    if (!list.length) { show($('reservationEmpty')); return; }
+    hide($('reservationEmpty'));
+    list.forEach(function (r) {
+      var row = document.createElement('div');
+      row.className = 'reservation-row';
+      row.innerHTML =
+        '<div class="info"><div class="date">' + r.dateJpLabel + '</div>' +
+        '<div class="time">' + r.slotStart + '〜' + r.slotEnd + '</div></div>';
+      var btn = document.createElement('button');
+      btn.className = 'btn secondary';
+      btn.textContent = 'キャンセル';
+      btn.addEventListener('click', function () { cancelReservation(r.reservationId); });
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+  }
+
+  function loadReservations() {
+    callApi('getMySeasonPassReservations', [myPassNo]).then(function (res) {
+      if (res.ok) renderReservations(res.result);
+    });
+  }
+
+  function cancelReservation(reservationId) {
+    callApi('cancelMySeasonPassReservation', [reservationId, lineUserId]).then(function (res) {
+      if (!res.ok) { window.alert(res.error || 'キャンセルに失敗しました。'); return; }
+      loadReservations();
+    });
+  }
+
+  function renderSlots(slots) {
+    var area = $('slotsArea');
+    area.innerHTML = '';
+    selectedSlot = null;
+    $('reserveBtn').disabled = true;
+    if (!slots.length) {
+      area.innerHTML = '<p class="muted">この日はご利用いただける時間枠がありません。</p>';
+      return;
+    }
+    var grid = document.createElement('div');
+    grid.className = 'slots';
+    slots.forEach(function (s) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn';
+      btn.disabled = s.remaining <= 0;
+      btn.innerHTML = s.start + '〜' + s.end + '<span class="remaining">' + (s.remaining > 0 ? '空き ' + s.remaining : '満枠') + '</span>';
+      btn.addEventListener('click', function () {
+        grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        selectedSlot = s.start;
+        $('reserveBtn').disabled = false;
+      });
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  }
+
+  function loadSlotsForSelectedDate() {
+    var date = $('reserveDate').value;
+    if (!date) return;
+    hide($('reserveError'));
+    hide($('reserveOk'));
+    callApi('getReservationSlots', [date]).then(function (res) {
+      if (!res.ok) {
+        $('slotsArea').innerHTML = '';
+        $('reserveError').textContent = res.error || '時間枠の取得に失敗しました。';
+        show($('reserveError'));
+        return;
+      }
+      renderSlots(res.result);
+    });
+  }
+
+  $('reserveDate').addEventListener('change', loadSlotsForSelectedDate);
+
+  $('reserveBtn').addEventListener('click', function () {
+    var date = $('reserveDate').value;
+    if (!date || !selectedSlot) return;
+    hide($('reserveError'));
+    hide($('reserveOk'));
+    $('reserveBtn').disabled = true;
+    $('reserveBtn').textContent = '送信中…';
+    callApi('createSeasonPassReservationForLiff', [myPassNo, lineUserId, date, selectedSlot]).then(function (res) {
+      $('reserveBtn').textContent = 'この時間でご予約する';
+      if (!res.ok) {
+        $('reserveBtn').disabled = false;
+        $('reserveError').textContent = res.error || 'ご予約に失敗しました。';
+        show($('reserveError'));
+        return;
+      }
+      $('reserveOk').textContent = 'ご予約が完了しました。LINEにも確認メッセージをお送りしました。';
+      show($('reserveOk'));
+      loadReservations();
+      loadSlotsForSelectedDate();
+    }).catch(function () {
+      $('reserveBtn').disabled = false;
+      $('reserveBtn').textContent = 'この時間でご予約する';
+      $('reserveError').textContent = '通信に失敗しました。電波状況をご確認のうえ再度お試しください。';
+      show($('reserveError'));
+    });
+  });
+
+  function initMain(profile) {
+    lineUserId = profile.userId;
+    $('reserveDate').min = tomorrowDateStr_();
+    $('reserveDate').value = tomorrowDateStr_();
+    hide($('loadingCard'));
+    show($('mainCard'));
+    loadReservations();
+    loadSlotsForSelectedDate();
+  }
+
+  if (!LIFF_ID) {
+    showFatal('LIFFの設定が完了していません。管理者にお問い合わせください。（LIFF_ID_SEASON_PASSが未設定です）');
+    return;
+  }
+
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    showFatal('LINEログインとの接続確認ができました。受付・予約の開始準備中です。');
+    throw new Error('接続確認完了。登録は無効です。');
+    if (!liff.isLoggedIn() && !liff.isInClient()) {
+      liff.login();
+      return null;
+    }
+    return liff.getProfile();
+  }).then(function (profile) {
+    if (!profile || !profile.userId) {
+      showFatal('LINEのプロフィール情報を取得できませんでした。LINEアプリから開き直してください。');
+      return;
+    }
+    return callApi('getMyPremiumPassForLiff', [profile.userId]).then(function (res) {
+      hide($('loadingCard'));
+      if (!res.ok || !res.result) {
+        show($('notMemberCard'));
+        return;
+      }
+      myPassNo = res.result.passNo;
+      initMain(profile);
+    });
+  }).catch(function (e) {
+    if (String(e && e.message).indexOf('接続確認完了') !== 0) showFatal('LINEとの接続に失敗しました。LINEアプリから開き直してください。');
+  });
+})();
+</script>
+</body>
+</html>
