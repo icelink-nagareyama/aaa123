@@ -89,6 +89,11 @@
 /* date-border-frame-v2 */
   .date-input-frame { display:grid; grid-template-columns:minmax(0,1fr); width:100%; min-width:0; box-sizing:border-box; margin:0; border:1px solid var(--border); border-radius:8px; background:#fff; overflow:hidden; }
   .date-input-frame #reserveDate { box-sizing:border-box; width:100%; min-width:0; max-width:100%; margin:0; border:0; border-radius:0; text-align:center; }
+/* pass-rules */
+  .pass-rules { margin-top:14px; padding-top:12px; border-top:1px solid var(--border); color:var(--brand-dark); font-size:14px; }
+  .pass-rules summary { cursor:pointer; font-weight:bold; padding:4px 0; }
+  .pass-rules ul { padding-left:20px; color:#445; line-height:1.8; }
+  .pass-rules li + li { margin-top:6px; }
 </style>
 </head>
 <body>
@@ -212,6 +217,13 @@
           '利用可能日：' + (p.usableDays || '全日'), '状態：' + p.statusLabel].forEach(function (text) {
           var line = document.createElement('p'); line.className = 'muted'; line.textContent = text; card.appendChild(line);
         });
+        if (Array.isArray(p.rules) && p.rules.length) {
+          var details = document.createElement('details'); details.className = 'pass-rules';
+          var summary = document.createElement('summary'); summary.textContent = 'このパスの利用ルール'; details.appendChild(summary);
+          var list = document.createElement('ul');
+          p.rules.forEach(function (rule) { var item = document.createElement('li'); item.textContent = rule; list.appendChild(item); });
+          details.appendChild(list); card.appendChild(details);
+        }
         cards.appendChild(card);
       });
       if (passes.length) show($('passSummary')); else hide($('passSummary'));
