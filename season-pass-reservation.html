@@ -58,11 +58,11 @@
   .btn.secondary { background: #fff; color: var(--danger); border: 1px solid var(--danger); margin-top: 0; padding: 8px 14px; font-size: 13px; width: auto; }
   .error-msg {
     margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
-    background: #fdecea; color: var(--danger); border: 1px solid #f5c6c0; display: none;
+    background: #fdecea; color: var(--danger); border: 1px solid #f5c6c0;
   }
   .ok-msg {
     margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px;
-    background: #eaf7ef; color: var(--ok); border: 1px solid #bfe6cd; display: none;
+    background: #eaf7ef; color: var(--ok); border: 1px solid #bfe6cd;
   }
   .reservation-row {
     display: flex; justify-content: space-between; align-items: center;
@@ -126,8 +126,8 @@
       <div id="slotsArea"></div>
 
       <button class="btn" id="reserveBtn" disabled>この時間でご予約する</button>
-      <div class="error-msg" id="reserveError"></div>
-      <div class="ok-msg" id="reserveOk"></div>
+      <div class="error-msg hidden" id="reserveError"></div>
+      <div class="ok-msg hidden" id="reserveOk"></div>
     </div>
   </div>
 </div>
