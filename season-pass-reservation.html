@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>【接続確認用】プレミアムパス優先予約 | エキサイティングアイスパークin流山</title>
+<title>プレミアムパス優先予約 | エキサイティングアイスパークin流山</title>
 
 <style>
   :root {
@@ -108,15 +108,17 @@
   </div>
 
   <div id="mainCard" class="hidden">
+    <p id="memberInfo" class="muted"></p>
     <div class="card">
       <div class="section-title">ご予約状況</div>
       <div id="reservationList"></div>
+      <button type="button" class="btn secondary" id="refreshReservations">予約状況を更新</button>
       <div id="reservationEmpty" class="empty-note hidden">現在、今後のご予約はありません。</div>
     </div>
 
     <div class="card">
       <div class="section-title">新しくご予約する</div>
-      <p class="muted">ご予約は翌日以降、同時に3件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。</p>
+      <p class="muted" id="maxActiveNote">ご予約は翌日以降、同時に3件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。</p>
 
       <label for="reserveDate">ご希望日</label>
       <input type="date" id="reserveDate">
@@ -130,196 +132,142 @@
   </div>
 </div>
 
-<p style="text-align:center;color:#08386B;font-size:12px">接続確認版 v2・受付登録は無効</p><script>
+<p style="text-align:center;color:#08386B;font-size:12px">プレミアムパス予約</p><script>
 (function () {
+  'use strict';
   var LIFF_ID = '2011760110-g8MzS4CT';
-  var BASE_URL = ''; // 登録を有効にする前に、検証済みの接続先を設定する
-  var lineUserId = '';
-  var myPassNo = '';
-  var selectedSlot = null;
-
+  var BASE_URL = 'https://script.google.com/macros/s/AKfycbxnVPoA358IJnGigvorj4R3nIIlz-bpVS_BFqpktKImhtKZfQlMsNHg7xu598O0knJ6/exec';
+  var selectedSlot = null, slotLoadId = 0, mutationPending = false, pass = null;
   function $(id) { return document.getElementById(id); }
   function show(el) { el.classList.remove('hidden'); }
   function hide(el) { el.classList.add('hidden'); }
-
-  function callApi(action, params) {
-    return Promise.reject(new Error('現在は接続確認用です。受付・予約の登録はまだ有効になっていません。'));
+  function fatal(message) { hide($('loadingCard')); hide($('mainCard')); $('fatalMsg').textContent = message; show($('fatalCard')); }
+  function error(message) { $('reserveError').textContent = message; show($('reserveError')); }
+  function api(operation, data) {
+    var accessToken = window.liff.getAccessToken();
+    if (!accessToken) return Promise.reject(new Error('LINEログインの有効期限が切れました。LINEから開き直してください。'));
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, 35000);
+    var request = Object.assign({}, data || {}, {operation: operation, accessToken: accessToken});
     return fetch(BASE_URL + '?source=api', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: action, params: params }),
-    }).then(function (res) { return res.json(); });
+      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'premiumLiff',params:[request]}), signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer'
+    }).then(function (res) {
+      if (!res.ok) throw new Error('サーバーと通信できませんでした。しばらくしてからお試しください。');
+      return res.json();
+    }).then(function (res) {
+      if (!res.ok) throw new Error(res.error || '処理に失敗しました。');
+      return res.result;
+    }).catch(function (e) {
+      if (e.name === 'AbortError' || e instanceof TypeError) throw new Error('通信結果を確認できませんでした。予約操作の場合は、予約状況を確認してから同じ日時で再度お試しください。');
+      throw e;
+    }).finally(function () { clearTimeout(timer); });
   }
-
-  function showFatal(message) {
-    hide($('loadingCard'));
-    $('fatalMsg').textContent = message;
-    show($('fatalCard'));
-  }
-
-  function tomorrowDateStr_() {
-    var d = new Date();
-    d.setDate(d.getDate() + 1);
-    var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + day;
-  }
-
   function renderReservations(list) {
-    var box = $('reservationList');
-    box.innerHTML = '';
+    var box = $('reservationList'); box.textContent = '';
     if (!list.length) { show($('reservationEmpty')); return; }
     hide($('reservationEmpty'));
     list.forEach(function (r) {
-      var row = document.createElement('div');
-      row.className = 'reservation-row';
-      row.innerHTML =
-        '<div class="info"><div class="date">' + r.dateJpLabel + '</div>' +
-        '<div class="time">' + r.slotStart + '〜' + r.slotEnd + '</div></div>';
-      var btn = document.createElement('button');
-      btn.className = 'btn secondary';
-      btn.textContent = 'キャンセル';
-      btn.addEventListener('click', function () { cancelReservation(r.reservationId); });
-      row.appendChild(btn);
-      box.appendChild(row);
-    });
-  }
-
-  function loadReservations() {
-    callApi('getMySeasonPassReservations', [myPassNo]).then(function (res) {
-      if (res.ok) renderReservations(res.result);
-    });
-  }
-
-  function cancelReservation(reservationId) {
-    callApi('cancelMySeasonPassReservation', [reservationId, lineUserId]).then(function (res) {
-      if (!res.ok) { window.alert(res.error || 'キャンセルに失敗しました。'); return; }
-      loadReservations();
-    });
-  }
-
-  function renderSlots(slots) {
-    var area = $('slotsArea');
-    area.innerHTML = '';
-    selectedSlot = null;
-    $('reserveBtn').disabled = true;
-    if (!slots.length) {
-      area.innerHTML = '<p class="muted">この日はご利用いただける時間枠がありません。</p>';
-      return;
-    }
-    var grid = document.createElement('div');
-    grid.className = 'slots';
-    slots.forEach(function (s) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'slot-btn';
-      btn.disabled = s.remaining <= 0;
-      btn.innerHTML = s.start + '〜' + s.end + '<span class="remaining">' + (s.remaining > 0 ? '空き ' + s.remaining : '満枠') + '</span>';
+      var row = document.createElement('div'); row.className = 'reservation-row';
+      var info = document.createElement('div'); info.className = 'info';
+      var date = document.createElement('div'); date.className = 'date'; date.textContent = r.dateJpLabel;
+      var time = document.createElement('div'); time.className = 'time'; time.textContent = r.slotStart + '〜' + r.slotEnd;
+      info.appendChild(date); info.appendChild(time); row.appendChild(info);
+      var btn = document.createElement('button'); btn.className = 'btn secondary'; btn.textContent = 'キャンセル';
       btn.addEventListener('click', function () {
-        grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
-        btn.classList.add('selected');
-        selectedSlot = s.start;
-        $('reserveBtn').disabled = false;
+        if (mutationPending || !window.confirm(r.dateJpLabel + ' ' + r.slotStart + 'の予約を取り消しますか？')) return;
+        mutationPending = true; btn.disabled = true;
+        api('cancel', {reservationId:r.reservationId}).then(function () { return loadMember(); })
+          .then(function () { return loadSlots(); }).catch(function (e) { error(e.message); })
+          .finally(function () { mutationPending = false; btn.disabled = false; });
       });
-      grid.appendChild(btn);
-    });
-    area.appendChild(grid);
-  }
-
-  function loadSlotsForSelectedDate() {
-    var date = $('reserveDate').value;
-    if (!date) return;
-    hide($('reserveError'));
-    hide($('reserveOk'));
-    callApi('getReservationSlots', [date]).then(function (res) {
-      if (!res.ok) {
-        $('slotsArea').innerHTML = '';
-        $('reserveError').textContent = res.error || '時間枠の取得に失敗しました。';
-        show($('reserveError'));
-        return;
-      }
-      renderSlots(res.result);
+      row.appendChild(btn); box.appendChild(row);
     });
   }
-
-  $('reserveDate').addEventListener('change', loadSlotsForSelectedDate);
-
-  $('reserveBtn').addEventListener('click', function () {
-    var date = $('reserveDate').value;
-    if (!date || !selectedSlot) return;
-    hide($('reserveError'));
-    hide($('reserveOk'));
-    $('reserveBtn').disabled = true;
-    $('reserveBtn').textContent = '送信中…';
-    callApi('createSeasonPassReservationForLiff', [myPassNo, lineUserId, date, selectedSlot]).then(function (res) {
-      $('reserveBtn').textContent = 'この時間でご予約する';
-      if (!res.ok) {
-        $('reserveBtn').disabled = false;
-        $('reserveError').textContent = res.error || 'ご予約に失敗しました。';
-        show($('reserveError'));
-        return;
-      }
-      $('reserveOk').textContent = 'ご予約が完了しました。LINEにも確認メッセージをお送りしました。';
-      show($('reserveOk'));
-      loadReservations();
-      loadSlotsForSelectedDate();
-    }).catch(function () {
-      $('reserveBtn').disabled = false;
-      $('reserveBtn').textContent = 'この時間でご予約する';
-      $('reserveError').textContent = '通信に失敗しました。電波状況をご確認のうえ再度お試しください。';
-      show($('reserveError'));
+  function loadMember() {
+    return api('bootstrap').then(function (data) {
+      hide($('loadingCard'));
+      pass = data.pass;
+      if (!pass) { hide($('mainCard')); show($('notMemberCard')); return false; }
+      hide($('notMemberCard')); show($('mainCard'));
+      $('memberInfo').textContent = pass.holderName + ' 様 ／ パス番号 ' + pass.passNo;
+      $('maxActiveNote').textContent = 'ご予約は翌日以降、同時に' + data.maxActive + '件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。';
+      $('reserveDate').min = data.tomorrow; $('reserveDate').max = pass.validTo;
+      if (!$('reserveDate').value || $('reserveDate').value < data.tomorrow || $('reserveDate').value > pass.validTo) $('reserveDate').value = data.tomorrow;
+      renderReservations(data.reservations);
+      return true;
     });
+  }
+  function loadSlots() {
+    selectedSlot = null; $('reserveBtn').disabled = true;
+    var loadId = ++slotLoadId, date = $('reserveDate').value;
+    $('slotsArea').textContent = '';
+    if (!pass || !date) return Promise.resolve();
+    if (date > pass.validTo) { $('slotsArea').textContent = 'パスの有効期間内に予約できる日はありません。'; return Promise.resolve(); }
+    $('slotsArea').textContent = '空き状況を確認中…';
+    return api('slots', {date:date}).then(function (slots) {
+      if (loadId !== slotLoadId) return;
+      var area = $('slotsArea'); area.textContent = '';
+      if (!slots.length) { area.textContent = 'この日はご利用いただける時間枠がありません。'; return; }
+      var grid = document.createElement('div'); grid.className = 'slots';
+      slots.forEach(function (s) {
+        var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'slot-btn'; btn.disabled = s.remaining <= 0;
+        btn.textContent = s.start + '〜' + s.end;
+        var remaining = document.createElement('span'); remaining.className = 'remaining'; remaining.textContent = s.remaining > 0 ? '空き ' + s.remaining : '満枠'; btn.appendChild(remaining);
+        btn.addEventListener('click', function () {
+          if (mutationPending) return;
+          grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected'); selectedSlot = s.start; $('reserveBtn').disabled = false;
+        });
+        grid.appendChild(btn);
+      });
+      area.appendChild(grid);
+    }).catch(function (e) { if (loadId === slotLoadId) { $('slotsArea').textContent = ''; error(e.message); } });
+  }
+  $('reserveDate').addEventListener('change', function () { hide($('reserveError')); hide($('reserveOk')); loadSlots(); });
+  $('refreshReservations').addEventListener('click', function () {
+    if (mutationPending) return;
+    hide($('reserveError')); loadMember().then(loadSlots).catch(function (e) { error(e.message); });
   });
-
-  function initMain(profile) {
-    lineUserId = profile.userId;
-    $('reserveDate').min = tomorrowDateStr_();
-    $('reserveDate').value = tomorrowDateStr_();
-    hide($('loadingCard'));
-    show($('mainCard'));
-    loadReservations();
-    loadSlotsForSelectedDate();
-  }
-
-
-  var finished = false;
-  var loadingTimer = setTimeout(function () {
-    if (finished) return;
-    finished = true;
-    showFatal('LINEとの接続が20秒以内に完了しませんでした。LINE DevelopersのEndpoint URLと、このページの公開URLが一致しているか確認してください。画面下の「接続確認版 v2」が見えない場合は古いページです。');
-  }, 20000);
-  function stopWith(message) {
-    if (finished) return;
-    finished = true; clearTimeout(loadingTimer); showFatal(message);
-  }
-  function startLiff() {
-    if (finished) return;
-    if (!window.liff) { stopWith('LINE SDKを読み込めませんでした。通信状態を確認して開き直してください。'); return; }
-    $('loadingCard').textContent = 'LINEの設定を確認中…';
-    Promise.resolve().then(function () { return window.liff.init({ liffId: LIFF_ID }); }).then(function () {
-      if (finished) return;
-      if (window.liff.isLoggedIn()) {
-        stopWith('LINEログインとの接続確認ができました。受付・予約の登録はまだ無効です。');
-        return;
+  $('reserveBtn').addEventListener('click', function () {
+    if (mutationPending || !selectedSlot || !pass) return;
+    var date = $('reserveDate').value, slot = selectedSlot;
+    mutationPending = true; $('reserveBtn').disabled = true; $('reserveDate').disabled = true;
+    $('reserveBtn').textContent = '予約を確認中…'; hide($('reserveError')); hide($('reserveOk'));
+    api('reserve', {date:date,slotStart:slot}).then(function (result) {
+      $('reserveOk').textContent = (result.alreadyReserved ? 'この日時はすでに予約済みです。' : 'ご予約が完了しました。') + ' 予約番号：' + result.reservationId +
+        (result.notificationFailed ? ' LINE通知を送れませんでしたが、予約は完了しています。' : '');
+      show($('reserveOk')); return loadMember();
+    }).then(loadSlots).catch(function (e) { error(e.message); })
+      .finally(function () { mutationPending = false; $('reserveDate').disabled = false; $('reserveBtn').textContent = 'この時間でご予約する'; $('reserveBtn').disabled = !selectedSlot; });
+  });
+  var initializationStopped = false;
+  var timer = setTimeout(function () { initializationStopped = true; fatal('LINEとの接続が完了しませんでした。画面を閉じ、LINEから開き直してください。'); }, 20000);
+  function stop(message) { clearTimeout(timer); fatal(message); }
+  function start() {
+    if (initializationStopped) return;
+    Promise.resolve().then(function () { return window.liff.init({liffId:LIFF_ID}); }).then(function () {
+      if (initializationStopped) return;
+      clearTimeout(timer);
+      if (!window.liff.isLoggedIn()) {
+        fatal('LINEへのログインが必要です。「LINEでログイン」を押してください。');
+        var btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'LINEでログイン';
+        btn.addEventListener('click', function () {
+          btn.disabled = true;
+          try { window.liff.login({redirectUri:window.location.origin + window.location.pathname}); }
+          catch (e) { btn.disabled = false; fatal('LINEログインを開始できませんでした。LINEから開き直してください。'); }
+        });
+        $('fatalCard').appendChild(btn); return;
       }
-      // 自動で再ログインさせず、本人の操作で開始する。リダイレクトのループを防ぐ。
-      stopWith('LINEへのログインが必要です。「LINEでログイン」を押してください。繰り返し戻る場合はEndpoint URLの設定を確認してください。');
-      var loginButton = document.createElement('button');
-      loginButton.className = 'btn'; loginButton.textContent = 'LINEでログイン';
-      loginButton.addEventListener('click', function () {
-        loginButton.disabled = true;
-        window.liff.login({ redirectUri: window.location.origin + window.location.pathname });
-      });
-      $('fatalCard').appendChild(loginButton);
-    }).catch(function () {
-      stopWith('LINE初期化に失敗しました。LIFF ID・Endpoint URL・公開状態を確認してください。');
-    });
+      $('loadingCard').textContent = 'プレミアムパスを確認中…';
+      return loadMember().then(function (isMember) { if (isMember) return loadSlots(); });
+    }).catch(function (e) { if (!initializationStopped) stop(e.message || 'LINE接続に失敗しました。LINEから開き直してください。'); });
   }
-  var sdk = document.createElement('script');
-  sdk.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
-  sdk.async = true; sdk.onload = startLiff;
-  sdk.onerror = function () { stopWith('LINE SDKの取得に失敗しました。通信状態を確認してください。'); };
+  var sdk = document.createElement('script'); sdk.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js'; sdk.async = true;
+  sdk.onload = start; sdk.onerror = function () { initializationStopped = true; stop('LINEとの接続に必要なファイルを取得できませんでした。通信状態を確認して開き直してください。'); };
   document.head.appendChild(sdk);
 })();
+
 </script>
 </body>
 </html>
