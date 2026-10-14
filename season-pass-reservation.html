@@ -79,6 +79,13 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .hidden { display: none !important; }
+/* centered-date-field */
+  input[type="date"] { display:block; box-sizing:border-box; min-width:0; max-width:100%; margin-inline:auto; text-align:center; -webkit-appearance:none; appearance:none; }
+  input[type="date"]::-webkit-date-and-time-value { text-align:center; min-width:0; }
+  input[type="date"]::-webkit-datetime-edit { text-align:center; }
+  .reservation-row { gap:8px; }
+  .reservation-row .info { min-width:0; overflow-wrap:anywhere; }
+  .reservation-row .btn { flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -172,9 +179,8 @@
     list.forEach(function (r) {
       var row = document.createElement('div'); row.className = 'reservation-row';
       var info = document.createElement('div'); info.className = 'info';
-      var date = document.createElement('div'); date.className = 'date'; date.textContent = r.dateJpLabel;
-      var time = document.createElement('div'); time.className = 'time'; time.textContent = r.slotStart + '〜' + r.slotEnd;
-      info.appendChild(date); info.appendChild(time); row.appendChild(info);
+      var date = document.createElement('div'); date.className = 'date'; date.textContent = r.reservationLabel || r.dateJpLabel + r.slotStart + '~' + r.slotEnd;
+      info.appendChild(date); row.appendChild(info);
       var btn = document.createElement('button'); btn.className = 'btn secondary'; btn.textContent = 'キャンセル';
       btn.addEventListener('click', function () {
         if (mutationPending || !window.confirm(r.dateJpLabel + ' ' + r.slotStart + 'の予約を取り消しますか？')) return;
