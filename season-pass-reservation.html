@@ -105,6 +105,8 @@
       ・パスをまだお持ちでない場合は、受付窓口でお申込みください。<br>
       ・すでにお持ちの場合は、ご登録のLINEアカウントに相違ないかスタッフにご確認ください。
     </p>
+    <label for="registrationLineId">登録用LINEユーザーID（スタッフへの登録依頼用）</label>
+    <input id="registrationLineId" type="text" readonly style="width:100%;font-size:12px" aria-label="登録用LINEユーザーID">
   </div>
 
   <div id="mainCard" class="hidden">
@@ -188,7 +190,7 @@
     return api('bootstrap').then(function (data) {
       hide($('loadingCard'));
       pass = data.pass;
-      if (!pass) { hide($('mainCard')); show($('notMemberCard')); return false; }
+      if (!pass) { $('registrationLineId').value = data.lineUserId || ''; hide($('mainCard')); show($('notMemberCard')); return false; }
       hide($('notMemberCard')); show($('mainCard'));
       $('memberInfo').textContent = pass.holderName + ' 様 ／ パス番号 ' + pass.passNo;
       $('maxActiveNote').textContent = 'ご予約は翌日以降、同時に' + data.maxActive + '件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。';
