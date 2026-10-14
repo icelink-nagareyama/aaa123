@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>プレミアムパス優先予約 | エキサイティングアイスパークin流山</title>
+<title>マイパス | エキサイティングアイスパークin流山</title>
 
 <style>
   :root {
@@ -95,8 +95,8 @@
 <div class="wrap">
   <div class="header">
     <div class="logo">エキサイティングアイスパークin流山</div>
-    <h1>プレミアムパス優先予約</h1>
-    <span class="badge-premium">PREMIUM専用</span>
+    <h1>マイパス</h1>
+    <span class="badge-premium">パス確認・プレミアム予約</span>
   </div>
 
   <div id="loadingCard" class="card center">
@@ -110,8 +110,8 @@
 
   <div id="notMemberCard" class="card hidden">
     <p class="muted">
-      このページはプレミアムパス会員様限定のご予約フォームです。<br><br>
-      現在このLINEアカウントに紐づく有効なプレミアムパスが見つかりませんでした。<br>
+      このLINEアカウントに登録されたパスを確認できます。<br><br>
+      現在このLINEアカウントに紐づくパスが見つかりませんでした。<br>
       ・パスをまだお持ちでない場合は、受付窓口でお申込みください。<br>
       ・すでにお持ちの場合は、ご登録のLINEアカウントに相違ないかスタッフにご確認ください。
     </p>
@@ -119,10 +119,12 @@
     <input id="registrationLineId" type="text" readonly style="width:100%;font-size:12px" aria-label="登録用LINEユーザーID">
   </div>
 
-  <div id="mainCard" class="hidden">
+  <div id="passSummary" class="hidden"><div id="passList"></div><button type="button" class="btn secondary" id="refreshPasses">パス情報を更新</button></div>
+<div id="premiumNote" class="card hidden"><p class="muted">優先予約は有効なプレミアムパスをお持ちの方がご利用いただけます。</p></div>
+<div id="mainCard" class="hidden">
     <p id="memberInfo" class="muted"></p>
     <div class="card">
-      <div class="section-title">ご予約状況</div>
+      <div class="section-title">プレミアムパスのご予約状況</div>
       <div id="reservationList"></div>
       <button type="button" class="btn secondary" id="refreshReservations">予約状況を更新</button>
       <div id="reservationEmpty" class="empty-note hidden">現在、今後のご予約はありません。</div>
@@ -144,7 +146,7 @@
   </div>
 </div>
 
-<p style="text-align:center;color:#08386B;font-size:12px">プレミアムパス予約</p><script>
+<p style="text-align:center;color:#08386B;font-size:12px">マイパス</p><script>
 (function () {
   'use strict';
   var LIFF_ID = '2011760110-g8MzS4CT';
@@ -199,7 +201,22 @@
     return api('bootstrap', {date:$('reserveDate').value || undefined}).then(function (data) {
       hide($('loadingCard'));
       pass = data.pass;
-      if (!pass) { $('registrationLineId').value = data.lineUserId || ''; hide($('mainCard')); show($('notMemberCard')); return false; }
+      var passes = data.passes || (pass ? [{passNo:pass.passNo,holderName:pass.holderName,planName:'プレミアムパス',validTo:pass.validTo,remainingUses:null,statusLabel:'有効'}] : []);
+      var cards = $('passList'); cards.textContent = '';
+      passes.forEach(function (p) {
+        var card = document.createElement('div'); card.className = 'card pass-card';
+        var title = document.createElement('div'); title.className = 'section-title'; title.textContent = p.planName; card.appendChild(title);
+        [p.holderName + ' 様 ／ ' + p.passNo,
+          '有効期間：' + (p.validFrom ? p.validFrom.replace(/-/g,'/') + '〜' : '') + p.validTo.replace(/-/g,'/'),
+          '残り回数：' + (p.remainingUses === null ? '無制限' : p.remainingUses + '回'),
+          '利用可能日：' + (p.usableDays || '全日'), '状態：' + p.statusLabel].forEach(function (text) {
+          var line = document.createElement('p'); line.className = 'muted'; line.textContent = text; card.appendChild(line);
+        });
+        cards.appendChild(card);
+      });
+      if (passes.length) show($('passSummary')); else hide($('passSummary'));
+      if (!pass) { hide($('mainCard')); if(passes.length){hide($('notMemberCard'));show($('premiumNote'));}else{$('registrationLineId').value = data.lineUserId || '';show($('notMemberCard'));hide($('premiumNote'));}return false; }
+      hide($('premiumNote'));
       hide($('notMemberCard')); show($('mainCard'));
       $('memberInfo').textContent = pass.holderName + ' 様 ／ パス番号 ' + pass.passNo;
       $('maxActiveNote').textContent = 'ご予約は翌日以降、同時に' + data.maxActive + '件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。';
@@ -247,6 +264,7 @@
     if (mutationPending) return;
     hide($('reserveError')); loadMember().catch(function (e) { error(e.message); });
   });
+  $('refreshPasses').addEventListener('click', function () { if (!mutationPending) loadMember().catch(function (e) { fatal(e.message); }); });
   $('reserveBtn').addEventListener('click', function () {
     if (mutationPending || !selectedSlot || !pass) return;
     var date = $('reserveDate').value, slot = selectedSlot;
