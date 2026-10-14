@@ -180,14 +180,14 @@
         if (mutationPending || !window.confirm(r.dateJpLabel + ' ' + r.slotStart + 'の予約を取り消しますか？')) return;
         mutationPending = true; btn.disabled = true;
         api('cancel', {reservationId:r.reservationId}).then(function () { return loadMember(); })
-          .then(function () { return loadSlots(); }).catch(function (e) { error(e.message); })
+          .catch(function (e) { error(e.message); })
           .finally(function () { mutationPending = false; btn.disabled = false; });
       });
       row.appendChild(btn); box.appendChild(row);
     });
   }
   function loadMember() {
-    return api('bootstrap').then(function (data) {
+    return api('bootstrap', {date:$('reserveDate').value || undefined}).then(function (data) {
       hide($('loadingCard'));
       pass = data.pass;
       if (!pass) { $('registrationLineId').value = data.lineUserId || ''; hide($('mainCard')); show($('notMemberCard')); return false; }
@@ -197,8 +197,29 @@
       $('reserveDate').min = data.tomorrow; $('reserveDate').max = pass.validTo;
       if (!$('reserveDate').value || $('reserveDate').value < data.tomorrow || $('reserveDate').value > pass.validTo) $('reserveDate').value = data.tomorrow;
       renderReservations(data.reservations);
+      if (data.slotsDate === $('reserveDate').value && Array.isArray(data.slots)) renderSlots(data.slots);
+      else return loadSlots().then(function () { return true; });
       return true;
     });
+  }
+  function renderSlots(slots) {
+    selectedSlot = null; $('reserveBtn').disabled = true;
+    var area = $('slotsArea'); area.textContent = '';
+    if (pass && $('reserveDate').value > pass.validTo) { area.textContent = 'パスの有効期間内に予約できる日はありません。'; return; }
+    if (!slots.length) { area.textContent = 'この日はご利用いただける時間枠がありません。'; return; }
+    var grid = document.createElement('div'); grid.className = 'slots';
+    slots.forEach(function (s) {
+      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'slot-btn'; btn.disabled = s.remaining <= 0;
+      btn.textContent = s.start + '〜' + s.end;
+      var remaining = document.createElement('span'); remaining.className = 'remaining'; remaining.textContent = s.remaining > 0 ? '空き ' + s.remaining : '満枠'; btn.appendChild(remaining);
+      btn.addEventListener('click', function () {
+        if (mutationPending) return;
+        grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected'); selectedSlot = s.start; $('reserveBtn').disabled = false;
+      });
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
   }
   function loadSlots() {
     selectedSlot = null; $('reserveBtn').disabled = true;
@@ -209,27 +230,13 @@
     $('slotsArea').textContent = '空き状況を確認中…';
     return api('slots', {date:date}).then(function (slots) {
       if (loadId !== slotLoadId) return;
-      var area = $('slotsArea'); area.textContent = '';
-      if (!slots.length) { area.textContent = 'この日はご利用いただける時間枠がありません。'; return; }
-      var grid = document.createElement('div'); grid.className = 'slots';
-      slots.forEach(function (s) {
-        var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'slot-btn'; btn.disabled = s.remaining <= 0;
-        btn.textContent = s.start + '〜' + s.end;
-        var remaining = document.createElement('span'); remaining.className = 'remaining'; remaining.textContent = s.remaining > 0 ? '空き ' + s.remaining : '満枠'; btn.appendChild(remaining);
-        btn.addEventListener('click', function () {
-          if (mutationPending) return;
-          grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
-          btn.classList.add('selected'); selectedSlot = s.start; $('reserveBtn').disabled = false;
-        });
-        grid.appendChild(btn);
-      });
-      area.appendChild(grid);
+      renderSlots(slots);
     }).catch(function (e) { if (loadId === slotLoadId) { $('slotsArea').textContent = ''; error(e.message); } });
   }
   $('reserveDate').addEventListener('change', function () { hide($('reserveError')); hide($('reserveOk')); loadSlots(); });
   $('refreshReservations').addEventListener('click', function () {
     if (mutationPending) return;
-    hide($('reserveError')); loadMember().then(loadSlots).catch(function (e) { error(e.message); });
+    hide($('reserveError')); loadMember().catch(function (e) { error(e.message); });
   });
   $('reserveBtn').addEventListener('click', function () {
     if (mutationPending || !selectedSlot || !pass) return;
@@ -240,7 +247,7 @@
       $('reserveOk').textContent = (result.alreadyReserved ? 'この日時はすでに予約済みです。' : 'ご予約が完了しました。') + ' 予約番号：' + result.reservationId +
         (result.notificationFailed ? ' LINE通知を送れませんでしたが、予約は完了しています。' : '');
       show($('reserveOk')); return loadMember();
-    }).then(loadSlots).catch(function (e) { error(e.message); })
+    }).catch(function (e) { error(e.message); })
       .finally(function () { mutationPending = false; $('reserveDate').disabled = false; $('reserveBtn').textContent = 'この時間でご予約する'; $('reserveBtn').disabled = !selectedSlot; });
   });
   var initializationStopped = false;
@@ -262,7 +269,7 @@
         $('fatalCard').appendChild(btn); return;
       }
       $('loadingCard').textContent = 'プレミアムパスを確認中…';
-      return loadMember().then(function (isMember) { if (isMember) return loadSlots(); });
+      return loadMember();
     }).catch(function (e) { if (!initializationStopped) stop(e.message || 'LINE接続に失敗しました。LINEから開き直してください。'); });
   }
   var sdk = document.createElement('script'); sdk.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js'; sdk.async = true;
