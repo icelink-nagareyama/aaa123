@@ -129,6 +129,21 @@
 .btn.secondary:disabled { background:#eaf0f6; color:#6d8298; border-color:#cfdae6; cursor:not-allowed; }
 .btn:focus-visible { outline:3px solid #78b5e4; outline-offset:3px; }
 @media(max-width:520px) { #customerPortal .cr-options-grid { grid-template-columns:minmax(0,1fr); } }
+
+/* Season pass comparison, stacked on phones. */
+.pa-comparison { margin:24px 0; }
+.pa-plan-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.pa-plan { display:flex; flex-direction:column; min-width:0; padding:18px; border:1px solid var(--border); border-top:4px solid var(--brand); border-radius:12px; background:#fff; }
+.pa-plan.pa-selected { border-color:var(--brand); background:#edf6ff; }
+.pa-plan h3 { margin:4px 0 12px; color:var(--brand-dark); }
+.pa-plan p { margin:0 0 12px; overflow-wrap:anywhere; }
+.pa-plan .pa-guide { color:var(--brand-dark); font-size:13px; font-weight:700; }
+.pa-plan .pa-prices { font-weight:700; }
+.pa-plan .pa-value { padding:12px; border-radius:8px; background:#ddecfb; color:var(--brand-dark); font-weight:700; }
+.pa-plan .btn { margin-top:auto; }
+#paCompareNote { font-size:13px; line-height:1.8; }
+@media(max-width:760px) { .pa-plan-grid { grid-template-columns:minmax(0,1fr); } }
+#customerPortal.pa-application { max-width:1080px; }
 </style>
 </head>
 <body>
@@ -315,9 +330,10 @@
  window.startCustomerPortal=function(config){
   if(config.view!=='passapply')return previousPortal(config);
   var root=document.getElementById('customerPortal'),original=document.querySelector('.wrap:not(#customerPortal)');if(original)original.classList.add('hidden');root.classList.remove('hidden');document.title='シーズンパス申込 | エキサイティングアイスパークin流山';
-  root.innerHTML='<header class="header"><div class="logo">エキサイティングアイスパークin流山</div><h1>シーズンパス申込</h1></header><section class="card"><h2>このLINEアカウントに登録します</h2><p class="muted">パスはお申込時のLINEアカウントに紐づきます。別のLINEアカウントでは表示・利用できません。ご家族のパスも、利用する方のお名前で1枚ずつお申し込みください。</p><a id="paPass" class="btn secondary">マイパスに戻る</a></section><p id="paNotice" role="status" aria-live="polite">申込情報を確認中…</p><div id="paError" class="error-msg hidden" role="alert" style="display:block"></div><button id="paRefresh" class="btn secondary" type="button">最新の情報に更新</button><section id="paRecovery" class="card hidden"><h2>送信結果の確認</h2><p id="paRecoveryText"></p><button id="paCheck" class="btn secondary" type="button">保存状態を確認</button><button id="paRetry" class="btn secondary hidden" type="button">同じ内容で再送信</button></section><section class="card"><h2>お申し込み</h2><p class="muted">お支払いは窓口で行います。申込番号を窓口で提示し、支払い後にパスをお受け取りください。</p><label for="paName">パスを利用する方の氏名</label><input id="paName" type="text" maxlength="100" autocomplete="name"><label for="paPlan">プラン</label><select id="paPlan"></select><label for="paAgeType">大人・子供</label><select id="paAgeType"><option value="ADULT">大人（中学生以上）</option><option value="CHILD">子供（小学生以下）</option></select><div id="paChildField" class="hidden"><label for="paChildAge">お子様の年齢</label><input id="paChildAge" type="number" min="3" max="12" inputmode="numeric"></div><p id="paPlanNote" class="muted"></p><div class="fee-box"><span>窓口でのお支払い金額</span><strong id="paPrice">—</strong></div><p id="paDeadline" class="muted"></p><label class="cp-check"><input id="paAccountCheck" type="checkbox"><span>このLINEアカウントにパスを登録することを確認しました。</span></label><button id="paSubmit" type="button" class="btn" disabled>この内容で申し込む</button></section><section class="card"><h2>このLINEアカウントのお申込</h2><div id="paApplications"></div></section>';
+  root.innerHTML='<header class="header"><div class="logo">エキサイティングアイスパークin流山</div><h1>シーズンパス申込</h1></header><section class="card"><h2>このLINEアカウントに登録します</h2><p class="muted">パスはお申込時のLINEアカウントに紐づきます。別のLINEアカウントでは表示・利用できません。ご家族のパスも、利用する方のお名前で1枚ずつお申し込みください。</p><a id="paPass" class="btn secondary">マイパスに戻る</a></section><p id="paNotice" role="status" aria-live="polite">申込情報を確認中…</p><div id="paError" class="error-msg hidden" role="alert" style="display:block"></div><button id="paRefresh" class="btn secondary" type="button">最新の情報に更新</button><section id="paRecovery" class="card hidden"><h2>送信結果の確認</h2><p id="paRecoveryText"></p><button id="paCheck" class="btn secondary" type="button">保存状態を確認</button><button id="paRetry" class="btn secondary hidden" type="button">同じ内容で再送信</button></section><section class="card"><h2>お申し込み</h2><p class="muted">お支払いは窓口で行います。申込番号を窓口で提示し、支払い後にパスをお受け取りください。</p><label for="paName">パスを利用する方の氏名</label><input id="paName" type="text" maxlength="100" autocomplete="name"><label for="paPlan">プラン</label><select id="paPlan"></select><label for="paAgeType">大人・子供</label><select id="paAgeType"><option value="ADULT">大人（中学生以上）</option><option value="CHILD">子供（小学生以下）</option></select><div id="paChildField" class="hidden"><label for="paChildAge">お子様の年齢</label><input id="paChildAge" type="number" min="3" max="12" inputmode="numeric"></div><section class="pa-comparison" aria-labelledby="paCompareTitle"><h2 id="paCompareTitle">あなたに合うパスを選ぶ</h2><p class="muted">大人・子供の区分を切り替えると、お得になる回数も変わります。各プランの「選ぶ」ボタンで申込内容に反映できます。</p><div id="paComparison" class="pa-plan-grid"></div><p id="paCompareNote" class="muted"></p></section><p id="paPlanNote" class="muted"></p><div class="fee-box"><span>窓口でのお支払い金額</span><strong id="paPrice">—</strong></div><p id="paDeadline" class="muted"></p><label class="cp-check"><input id="paAccountCheck" type="checkbox"><span>このLINEアカウントにパスを登録することを確認しました。</span></label><button id="paSubmit" type="button" class="btn" disabled>この内容で申し込む</button></section><section class="card"><h2>このLINEアカウントのお申込</h2><div id="paApplications"></div></section>';
   function $(id){return document.getElementById(id);}function hide(id,on){$(id).classList.toggle('hidden',on);}function error(e){$('paError').textContent=e.name==='AbortError'?'通信に時間がかかっています。保存状態を確認してください。':e.message||'通信できませんでした。';hide('paError',false);}
   $('paPass').href='https://liff.line.me/'+config.liffId;
+  root.classList.add('pa-application');
   var data=null,busy=false,pending=null,key='';
   function api(operation,input){var token=window.liff.getAccessToken();if(!token)return Promise.reject(Error('LINEから開き直してください。'));var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},35000);
    return fetch(config.baseUrl+'?source=api&request='+Date.now(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'passApplicationLiff',params:[Object.assign({},input||{},{operation:operation,accessToken:token})]})}).then(function(r){if(!r.ok)throw Error('サーバーと通信できませんでした。');return r.json();}).then(function(r){if(!r.ok){var e=Error(r.error||'処理できませんでした。');e.serverRejected=true;throw e;}return r.result;}).finally(function(){clearTimeout(timer);});
@@ -325,9 +341,37 @@
   function meta(){return {requestId:window.crypto.randomUUID().replace(/-/g,''),issuedAt:Date.now()};}function store(){try{if(key){if(pending)sessionStorage.setItem(key,JSON.stringify(pending));else sessionStorage.removeItem(key);}}catch(e){}}
   function selectedPlan(){return data&&data.plans.find(function(p){return p.name===$('paPlan').value;});}
   function price(){var p=selectedPlan();return p?($('paAgeType').value==='ADULT'?p.adultPrice:p.childPrice):null;}
-  function lock(){root.querySelectorAll('input,select,button').forEach(function(e){e.disabled=busy||!!pending;});$('paRefresh').disabled=busy;$('paCheck').disabled=busy;$('paRetry').disabled=busy;var plan=selectedPlan();$('paSubmit').disabled=busy||!!pending||!plan||plan.remaining<1||!price()||data.closed;}
+  function lock(){root.querySelectorAll('input,select,button').forEach(function(e){e.disabled=busy||!!pending||!!e.paUnavailable;});$('paRefresh').disabled=busy;$('paCheck').disabled=busy;$('paRetry').disabled=busy;var plan=selectedPlan();$('paSubmit').disabled=busy||!!pending||!plan||plan.remaining<1||!price()||data.closed;}
   function run(fn){if(busy)return Promise.resolve();busy=true;lock();hide('paError',true);return Promise.resolve().then(fn).catch(error).finally(function(){busy=false;lock();});}
-  function renderPrice(){var p=selectedPlan(),amount=price();$('paPrice').textContent=amount?'¥'+Number(amount).toLocaleString('ja-JP'):'料金を確認できません';$('paPlanNote').textContent=p?(p.remaining<1?'このプランの受付は終了しました。':p.usableDays+'／有効期限 '+data.validToLabel+'／'+(p.rules||[]).join(' ')):'';hide('paChildField',$('paAgeType').value!=='CHILD');lock();}
+  function money(n){return '¥'+Number(n).toLocaleString('ja-JP');}
+  function renderComparison(){
+   var box=$('paComparison');box.replaceChildren();if(!data)return;
+   var adult=$('paAgeType').value==='ADULT',age=adult?'大人':'子供',unit=data.normalAdmission&&Number(adult?data.normalAdmission.adult:data.normalAdmission.child);
+   var guides={'平日パス':'平日に何度も通いたい方へ','土日祝10回券':'曜日を選ばず、10回楽しみたい方へ','プレミアムパス':'頻繁に通って、優先予約も使いたい方へ'};
+   data.plans.forEach(function(p){
+    var card=document.createElement('article');card.className='pa-plan'+(p.name===$('paPlan').value?' pa-selected':'');
+    function line(tag,text,cls){var e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;card.appendChild(e);}
+    var amount=Number(adult?p.adultPrice:p.childPrice),limit=Number(p.usageLimit)||null;
+    line('p',guides[p.name]||'利用条件を比べてお選びください','pa-guide');line('h3',p.name);
+    line('p','大人 '+(p.adultPrice?money(p.adultPrice):'料金確認中')+' ／ 子供 '+(p.childPrice?money(p.childPrice):'料金確認中'),'pa-prices');
+    line('p','利用できる日：'+p.usableDays+(p.name==='土日祝10回券'?'（平日も使えます）':''));
+    line('p','利用回数：'+(limit?'シーズン合計'+limit+'回':p.name==='平日パス'?'シーズン中、1日1回':p.name==='プレミアムパス'?'平日は回数無制限／土日祝は1日2回':'下の利用条件をご確認ください'));
+    line('p',p.name==='プレミアムパス'?'優先予約：翌日以降の日時を予約できます':'受付：通常の受付列をご利用ください');
+    if(amount>0&&unit>0){
+     var first=Math.floor(amount/unit)+1;
+     if(!limit||first<=limit)line('p',age+'は'+first+'回目から通常料金よりお得','pa-value');
+     else line('p',age+'の通常料金との比較では、'+limit+'回以内に料金差のお得はありません。','pa-value');
+     if(limit){var saving=unit*limit-amount;line('p',limit+'回使うと1回あたり約'+money(Math.ceil(amount/limit))+(saving>0?'／通常'+limit+'回分より'+money(saving)+'お得':saving===0?'／通常'+limit+'回分と同額':''));}
+     line('p','比較：'+age+'の通常入場料 '+money(unit)+' × 利用回数','muted');
+    }else line('p','通常料金の設定を確認できないため、お得になる回数は表示していません。','muted');
+    line('p','有効期限：'+data.validToLabel,'muted');
+    (p.rules||[]).forEach(function(rule){line('p',rule,'muted');});
+    var b=document.createElement('button');b.type='button';b.className='btn secondary';b.textContent=p.remaining<1?'受付終了':p.name===$('paPlan').value?'このプランを選択中':'このプランを選ぶ';b.paUnavailable=p.remaining<1||data.closed;b.disabled=b.paUnavailable;
+    b.addEventListener('click',function(){if(busy||pending||data.closed||p.remaining<1)return;$('paPlan').value=p.name;renderPrice();});card.appendChild(b);box.appendChild(card);
+   });
+   $('paCompareNote').textContent='料金比較は'+(data.normalAdmission&&data.normalAdmission.asOfLabel?data.normalAdmission.asOfLabel+'時点の':'現在設定されている')+'通常入場料（'+age+'1名・割引なし）が基準です。親子ペア・ナイター・マイシューズ割引を利用する場合は異なります。手袋・補助具・延長料金は比較に含みません。パスのご利用も営業時間・時間制に従います。';
+  }
+  function renderPrice(){var p=selectedPlan(),amount=price();$('paPrice').textContent=amount?'¥'+Number(amount).toLocaleString('ja-JP'):'料金を確認できません';$('paPlanNote').textContent=p?(p.remaining<1?'このプランの受付は終了しました。':p.usableDays+'／有効期限 '+data.validToLabel+'／'+(p.rules||[]).join(' ')):'';hide('paChildField',$('paAgeType').value!=='CHILD');renderComparison();lock();}
   function renderApps(){var box=$('paApplications');box.replaceChildren();if(!data.applications.length){box.textContent='お申込はまだありません。';return;}data.applications.forEach(function(a){var card=document.createElement('article');card.className='cp-ticket';function line(tag,text){var e=document.createElement(tag);e.textContent=text;card.appendChild(e);}line('h3',a.applyNo);line('p',a.holderName+'／'+a.planName+'（'+(a.ageType==='ADULT'?'大人':'子供')+'）');line('p','¥'+Number(a.price).toLocaleString('ja-JP')+'／'+({PENDING:'支払待ち',COMPLETED:'発行済み',ISSUING:'発行状態を窓口で確認してください',EXPIRED:'期限切れ',CANCELED:'取消済み'}[a.status]||a.status));line('p','お支払い期限：'+a.deadlineLabel);if(a.passNo)line('p','パス番号：'+a.passNo);if(!a.verifiedLine)line('p','LINE本人確認のない旧申込です。こちらの画面から改めてお申し込みください。');if(a.status==='PENDING'){var b=document.createElement('button');b.type='button';b.className='btn secondary';b.textContent='この申込を取り消す';b.addEventListener('click',function(){if(busy||pending||!window.confirm(a.applyNo+'を取り消しますか？'))return;pending={operation:'cancel',applyNo:a.applyNo,operationMeta:meta()};store();run(send);});card.appendChild(b);}box.appendChild(card);});}
   function load(){return api('bootstrap').then(function(r){var oldPlan=$('paPlan').value;data=r;var nextKey='icepark.pass.apply.pending.'+r.ownerKey;if(key&&key!==nextKey)pending=null;key=nextKey;if(!pending){try{var saved=JSON.parse(sessionStorage.getItem(key)||'null');if(saved&&saved.operationMeta&&['apply','cancel'].includes(saved.operation))pending=saved;}catch(e){}}$('paPlan').replaceChildren();r.plans.forEach(function(p){var o=document.createElement('option');o.value=p.name;o.textContent=p.name+(p.remaining<1?'（受付終了）':'');$('paPlan').appendChild(o);});if(r.plans.some(function(p){return p.name===oldPlan;}))$('paPlan').value=oldPlan;renderPrice();renderApps();$('paDeadline').textContent='お支払い期限：'+r.deadlineLabel;hide('paRecovery',!pending);$('paNotice').textContent=r.closed?'今シーズンのお申込は終了しました。':'申込情報を更新しました。';lock();});}
   function done(result,kind){pending=null;store();hide('paRecovery',true);hide('paRetry',true);if(kind==='apply'){$('paName').value='';$('paChildAge').value='';$('paAccountCheck').checked=false;}return load().catch(error).then(function(){$('paNotice').textContent=kind==='apply'?'お申込番号は「'+result.applyNo+'」です。お支払い期限までに窓口でお支払いください。'+(result.notificationFailed?' LINE通知は届いていなくても申込済みです。':''):'お申込を取り消しました。';});}
