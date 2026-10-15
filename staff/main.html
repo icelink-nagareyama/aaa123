@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+</head>
+<body data-layout-page="Main" class="layout-refresh">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">設定</h1>
+          <div class="page-header-sub">各種設定値の確認・変更を行います（管理者のみ）</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+
+      <div id="deniedBox" class="card" style="display:none;">
+        <p>この画面は管理者のみ利用できます。</p>
+      </div>
+
+      <div class="card" id="testEnvironmentCard" style="display:none;"><div class="section-title">テストモード</div><p>本番と別のデータで受付・入退場・補助具などを試せます。LINE送信と本番勤怠への書き込みは行いません。</p><button class="btn btn-outline" id="prepareTestBtn">テスト環境を作成・確認</button><p id="testEnvironmentResult"></p></div>
+      <div id="settingsGroups"></div>
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() { document.getElementById('errorBox').style.display = 'none'; }
+
+    var layoutSettingLabels = {
+      aid_stock_total:'補助具の総在庫数', nighter_start_time:'ナイター開始時刻',
+      capacity_normal:'通常定員', capacity_max:'最大定員',
+      mode_self_entry_max:'セルフ入場の人数上限', mode_auto_max:'自動呼出の人数上限',
+      mode_manual_trigger:'手動呼出に切り替える人数', auto_call_interval_sec:'自動呼出の間隔',
+      cancel_grace_minutes:'呼出後の取消猶予', cancel_grace_opening_minutes:'開場時の取消猶予',
+      extend_grace_minutes:'延長料金の猶予', nps_delay_minutes:'アンケート送信までの時間',
+      stock_alert_threshold_default:'用品在庫の警告しきい値', aid_stock_alert_threshold:'補助具在庫の警告しきい値',
+      seasonpass_weekday_max:'平日パスの発行上限', ticketbook_max:'回数券の発行上限',
+      seasonpass_premium_max:'プレミアムパスの発行上限', seasonpass_reservation_slot_max:'予約枠の人数上限',
+      seasonpass_reservation_max_active:'同時に保持できる予約数', seasonpass_reservation_slot_minutes:'予約枠の時間',
+      season_event_open_date:'シーズン開始日', seasonpass_apply_deadline_days_preopen:'開場前の申込期限',
+      seasonpass_apply_deadline_days_postopen:'開場後の申込期限', heartbeat_alert_threshold_minutes:'稼働監視の警告しきい値',
+      large_party_alert_threshold:'大人数受付の警告しきい値', event_latitude:'会場の緯度', event_longitude:'会場の経度',
+      dashboard_layout_json:'ダッシュボードの表示設定', last_heartbeat_at:'最終稼働確認時刻',
+      heartbeat_alert_notified_at:'稼働監視の最終警告時刻', aid_alert_notified_at:'補助具の最終在庫警告時刻',
+      opening_call_run_flag:'開場時呼出の実行済み情報'
+    };
+    function inputTypeFor(dataType) {
+      if (dataType === 'NUMBER') return 'number';
+      if (dataType === 'DATETIME') return 'datetime-local';
+      return 'text';
+    }
+
+    function render(list) {
+      var container = document.getElementById('settingsGroups');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        var emptyCard = document.createElement('div');
+        emptyCard.className = 'card';
+        emptyCard.innerHTML =
+          '<div class="empty-hint">Settingsシートにまだ設定項目が登録されていません。' +
+          'スプレッドシートのSettingsシートに key・value・data_type・group・label 等の行を追加すると、' +
+          'ここに一覧表示されます。</div>';
+        container.appendChild(emptyCard);
+        return;
+      }
+
+      var groups = {};
+      list.forEach(function (s) {
+        var displayGroup = /^(last_|.*_notified|.*_done|.*_processed|.*_run_flag|heartbeat_alert_notified)/.test(s.key) ? 'システム情報' : '運営設定';
+        if (!groups[displayGroup]) groups[displayGroup] = [];
+        groups[displayGroup].push(s);
+      });
+
+      Object.keys(groups).forEach(function (groupName) {
+        var card = document.createElement('div');
+        card.className = 'card';
+        var title = document.createElement('div');
+        title.className = 'section-title';
+        title.textContent = groupName;
+        card.appendChild(title);
+
+        groups[groupName].forEach(function (s) {
+          var field = document.createElement('div');
+          field.className = 'field';
+          var label = document.createElement('label');
+          label.textContent = ((s.label && s.label !== s.key) ? s.label : (layoutSettingLabels[s.key] || s.label)) + (s.unit ? '（' + s.unit + '）' : '');
+          field.appendChild(label);
+          var keyLabel = document.createElement('div');keyLabel.className='settings-key';keyLabel.textContent=s.key;field.appendChild(keyLabel);
+
+          var row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.gap = '8px';
+
+          var input;
+          if (s.dataType === 'BOOLEAN') {
+            input = document.createElement('select');
+            ['TRUE', 'FALSE'].forEach(function (v) {
+              var opt = document.createElement('option');
+              opt.value = v; opt.textContent = (v === 'TRUE') ? '有効' : '無効';
+              if (String(s.value).toUpperCase() === v) opt.selected = true;
+              input.appendChild(opt);
+            });
+          } else {
+            input = document.createElement('input');
+            input.type = inputTypeFor(s.dataType);
+            input.value = s.value;
+          }
+          input.style.flex = '1 1 auto';
+          row.appendChild(input);
+
+          var saveBtn = document.createElement('button');
+          saveBtn.className = 'btn btn-outline btn-sm';
+          saveBtn.textContent = '保存';
+          saveBtn.style.flex = '0 0 auto';
+          saveBtn.addEventListener('click', function () {
+            clearError();
+            staffRun()
+              .withSuccessHandler(function () { window.alert(s.label + ' を更新しました。'); })
+              .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+              .updateSettingValueApi(s.key, input.value, staffId);
+          });
+          row.appendChild(saveBtn);
+
+          field.appendChild(row);
+          card.appendChild(field);
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function loadSettings() {
+      clearError();
+      staffRun()
+        .withSuccessHandler(render)
+        .withFailureHandler(function (err) {
+          document.getElementById('deniedBox').style.display = 'block';
+          showError((err && err.message ? err.message : err));
+        })
+        .getSettingsListView(staffId);
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+            if (staff.role === 'ADMIN') document.getElementById('testEnvironmentCard').style.display = 'block';
+          }
+        })
+        .getStaffById(staffId);
+    }
+
+    document.getElementById('prepareTestBtn').addEventListener('click', function () {
+      var btn = this; btn.disabled = true;
+      staffRun().withSuccessHandler(function (v) {
+        btn.disabled = false;
+        var out = document.getElementById('testEnvironmentResult'); out.textContent = '準備できました。ログアウトし、テストモードにチェックしてログインしてください。 ';
+        var link = document.createElement('a'); link.href = v.url; link.textContent = 'テスト用データを開く'; link.target = '_blank'; out.appendChild(link);
+      }).withFailureHandler(function (err) { btn.disabled = false; showError(err.message || err); }).prepareTestEnvironment(staffId);
+    });
+    renderAdminSidebar('main');
+    loadStaffLabel();
+    loadSettings();
+  </script>
+</body>
+</html>

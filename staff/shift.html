@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+  <style>
+    .shift-punch-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .shift-actual-times { display:flex; flex-wrap:wrap; gap:16px; margin-top:8px; }
+    .shift-punch-note { margin-top:8px; font-size:12px; color:#647780; }
+    #punchResult { margin-bottom:16px; }
+    @media(max-width:700px) { .shift-punch-actions .btn { flex:1; } }
+  </style>
+</head>
+<body data-layout-page="Shift" class="layout-refresh">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">シフト</h1>
+          <div class="page-header-sub">出退勤の打刻と、本日のシフト確認を行います</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+
+      <div id="punchResult" role="status" aria-live="polite"></div>
+
+      <div class="card" id="costCard" style="display:none;">
+        <div class="section-title">
+          <span>本日の人件費見込み（管理者のみ）</span>
+          <span class="tag" id="costTotalTag">¥0</span>
+        </div>
+        <p class="loading">※実打刻がある人は実打刻、未打刻の人は予定時刻で概算しています</p>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <span>本日のシフト</span>
+          <span class="tag" id="totalTag">0件</span>
+        </div>
+        <div id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    var isAdmin = false;
+    var pendingPunches = Object.create(null);
+    var shiftRequestVersion = 0;
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() { document.getElementById('errorBox').style.display = 'none'; }
+
+    function punch(targetStaffId, staffName, type) {
+      if (pendingPunches[targetStaffId]) return;
+      var label = type === 'IN' ? '出勤' : '退勤';
+      if (!window.confirm(staffName + '様の' + label + 'を打刻します。よろしいですか？')) return;
+      pendingPunches[targetStaffId] = true;
+      shiftRequestVersion++;
+      document.querySelectorAll('.shift-row').forEach(function (row) {
+        if (row.dataset.staffId === targetStaffId) row.querySelectorAll('button').forEach(function (button) { button.disabled = true; });
+      });
+      clearError();
+      document.getElementById('punchResult').textContent = staffName + '様の打刻を保存しています…';
+      staffRun()
+        .withSuccessHandler(function (res) {
+          delete pendingPunches[targetStaffId];
+          document.getElementById('punchResult').textContent = res.staffName + '様の' + label + 'を保存しました（' +
+            new Date(res.at).toLocaleTimeString('ja-JP', { timeZone:'Asia/Tokyo', hour:'2-digit', minute:'2-digit' }) + '）。';
+          if (res.warning) showError(res.warning);
+          loadShift();
+          if (isAdmin) loadCost();
+        })
+        .withFailureHandler(function (err) {
+          delete pendingPunches[targetStaffId];
+          document.getElementById('punchResult').textContent = '';
+          showError((err && err.message ? err.message : err));
+          loadShift();
+        })
+        .recordAttendance(targetStaffId, type);
+    }
+
+    function render(list) {
+      document.getElementById('totalTag').textContent = list.length + '件';
+      var box = document.getElementById('list');
+      if (list.length === 0) {
+        box.innerHTML = '<div class="empty-hint">本日のシフト登録はありません</div>';
+        return;
+      }
+      box.innerHTML = '';
+      list.forEach(function (s) {
+        var row = document.createElement('div');
+        row.className = 'list-row shift-row';
+        row.dataset.staffId = s.staffId;
+        var top = document.createElement('div'); top.className = 'list-row-top';
+        var name = document.createElement('div'); name.className = 'list-row-ticket'; name.textContent = s.staffName;
+        var badge = document.createElement('span'); badge.className = 'tag shift-state';
+        badge.textContent = { NOT_STARTED:'未出勤', WORKING:'出勤中', FINISHED:'退勤済み', INVALID:'実績・シフト要確認' }[s.attendanceStatus] || '要確認';
+        top.appendChild(name); top.appendChild(badge); row.appendChild(top);
+        var plan = document.createElement('div'); plan.className = 'list-row-sub';
+        plan.textContent = '予定：' + s.startTime + '〜' + s.endTime + (s.task ? ' ／ ' + s.task : ''); row.appendChild(plan);
+        var actual = document.createElement('div'); actual.className = 'shift-actual-times';
+        var start = document.createElement('span'); start.className = 'shift-actual-start'; start.textContent = '出勤：' + (s.actualStartLabel || '未打刻');
+        var end = document.createElement('span'); end.className = 'shift-actual-end'; end.textContent = '退勤：' + (s.actualEndLabel || '未打刻');
+        actual.appendChild(start); actual.appendChild(end); row.appendChild(actual);
+        var actions = document.createElement('div'); actions.className = 'shift-punch-actions';
+        [['IN','出勤',s.canPunchIn],['OUT','退勤',s.canPunchOut]].forEach(function (item) {
+          var button = document.createElement('button'); button.type = 'button';
+          button.className = 'btn' + (item[0] === 'OUT' ? ' btn-outline' : '') + ' shift-punch-btn';
+          button.dataset.type = item[0]; button.textContent = item[1];
+          button.setAttribute('aria-label', s.staffName + '様の' + item[1]);
+          button.disabled = !item[2] || !!pendingPunches[s.staffId];
+          button.addEventListener('click', function () { punch(s.staffId, s.staffName, item[0]); });
+          actions.appendChild(button);
+        });
+        row.appendChild(actions);
+        if (s.note) { var note = document.createElement('div'); note.className = 'list-row-sub'; note.textContent = '備考：' + s.note; row.appendChild(note); }
+        if (!isAdmin && s.staffId !== staffId) {
+          var hint = document.createElement('div'); hint.className = 'shift-punch-note'; hint.textContent = '他のスタッフの打刻は管理者のみ操作できます。'; row.appendChild(hint);
+        }
+        box.appendChild(row);
+      });
+    }
+
+    function loadShift() {
+      var version = ++shiftRequestVersion;
+      staffRun()
+        .withSuccessHandler(function (list) { if (version === shiftRequestVersion) render(list); })
+        .withFailureHandler(function (err) { if (version === shiftRequestVersion) showError('シフトの取得に失敗しました：' + (err && err.message ? err.message : err)); })
+        .getTodayShiftView();
+    }
+
+    function loadCost() {
+      staffRun()
+        .withSuccessHandler(function (total) {
+          document.getElementById('costTotalTag').textContent = '¥' + total.toLocaleString();
+        })
+        .withFailureHandler(function () { document.getElementById('costCard').style.display = 'none'; })
+        .getTodayShiftCostTotal(staffId);
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+            isAdmin = (staff.role === 'ADMIN');
+            loadShift();
+            if (isAdmin) {
+              document.getElementById('costCard').style.display = 'block';
+              loadCost();
+            }
+          }
+        })
+        .getStaffById(staffId);
+    }
+
+    renderAdminSidebar('shift');
+    loadStaffLabel();
+    loadShift();
+    setInterval(loadShift, 30000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+</head>
+<body data-layout-page="DailyReport" class="layout-refresh">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">日報</h1>
+          <div class="page-header-sub">清掃・整氷の確認と給油量の記録、過去の日報の閲覧</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+      <section class="card" id="rinkConditionForm">
+<h2 class="section-title">整氷・リンクコンディション</h2><p id="rinkConditionCurrent">最新の状態を確認しています</p>
+<div class="rink-condition-fields"><div class="field"><label for="rinkPhase">整氷区分</label><select id="rinkPhase"><option value="">選択してください</option><option value="OPENING">開始前</option><option value="DURING">営業中</option><option value="CLOSING">終了時</option></select></div><div class="field"><label for="rinkStart">開始時刻</label><input id="rinkStart" type="time"></div><div class="field"><label for="rinkEnd">終了時刻</label><input id="rinkEnd" type="time"></div><div class="field"><label for="rinkState">整氷後のリンクコンディション</label><select id="rinkState"><option value="">選択してください</option><option value="GOOD">良好</option><option value="CAUTION">注意</option><option value="ACTION">要対応</option></select></div></div>
+<div class="rink-condition-fields"><div class="field"><label for="rinkLevel">整氷レベル（必須）</label><select id="rinkLevel"><option value="">選択してください</option><option value="LIGHT">軽め</option><option value="NORMAL">通常</option><option value="THOROUGH">しっかり</option></select></div><div class="field"><label for="rinkMelting">溶けの有無（整氷後・必須）</label><select id="rinkMelting"><option value="">選択してください</option><option value="MELTING">溶けている</option><option value="NOT_MELTING">溶けていない</option></select></div></div>
+<div class="field"><label for="rinkNote">氷面の状況・対応メモ（注意・要対応の場合は必須）</label><textarea id="rinkNote" maxlength="1000" rows="3" placeholder="例：入口付近に水が残っているため、拭き取りと再確認を実施"></textarea></div>
+<button id="rinkSave" type="button" class="btn" disabled>整氷・状態を記録</button> <button id="rinkRefresh" type="button" class="btn btn-outline">最新の状態・保存結果を確認</button>
+<p id="rinkMessage" role="status" aria-live="polite"></p><div id="rinkTodayRecords"></div>
+</section><style>.rink-condition-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.rink-condition-record{padding:12px 0;border-top:1px solid #e2ebf2;white-space:pre-wrap;overflow-wrap:anywhere}.rink-condition-record strong{color:#123954}.rink-condition-record small{display:block;color:#648096}@media(max-width:600px){.rink-condition-fields{grid-template-columns:1fr}}</style>
+<script>
+(function(){var view=null,busy=false,pending=null,storageKey='';function $(id){return document.getElementById(id);}function day(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function message(t){$('rinkMessage').textContent=t;}function lock(){['rinkLevel','rinkMelting','rinkPhase','rinkStart','rinkEnd','rinkState','rinkNote','rinkSave'].forEach(function(id){$(id).disabled=busy||!!pending||!view;});$('rinkRefresh').disabled=busy;}
+function persist(){try{if(pending)sessionStorage.setItem(storageKey,JSON.stringify(pending));else sessionStorage.removeItem(storageKey);}catch(e){}}
+function records(box,list){box.replaceChildren();if(!list.length){box.textContent='この日の整氷・状態の記録はありません。';return;}list.forEach(function(r){var div=document.createElement('div'),title=document.createElement('strong'),note=document.createElement('p'),meta=document.createElement('small');div.className='rink-condition-record';title.textContent=r.start+'〜'+r.end+' ／ '+r.phaseLabel+' ／ '+r.levelLabel+' ／ '+r.meltingLabel+' ／ '+r.conditionLabel;note.textContent=r.note||'追加メモなし';meta.textContent='記録時刻：'+new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(new Date(r.recordedAt));div.append(title,note,meta);box.appendChild(div);});}
+function render(v){view=v;$('rinkConditionCurrent').textContent='本日のリンクコンディション：'+v.label;records($('rinkTodayRecords'),v.records);lock();}
+function refreshed(){staffRun().withSuccessHandler(function(v){busy=false;render(v);}).withFailureHandler(function(e){busy=false;lock();message(e.message||e);}).getRinkConditionView(day());}
+function success(v){pending=null;persist();busy=false;render(v);message('整氷・状態を日報に保存しました。');if(typeof loadDates==='function'&&typeof isAdmin!=='undefined'&&isAdmin)loadDates();}
+function check(){if(!pending)return;busy=true;lock();staffRun().withSuccessHandler(function(s){busy=false;if(s.state==='DONE'){success(s.result);return;}if(s.state==='REJECTED'){pending=null;persist();message(s.message||'入力内容を確認してください。');refreshed();}else if(s.state==='NOT_FOUND'){message('未保存です。同じ内容で再送信します。');send();}else message('保存途中の可能性があります。再登録せず、管理者に確認してください。');lock();}).withFailureHandler(function(){busy=false;lock();message('保存状態を取得できません。接続回復後に確認してください。');}).getStaffMutationStatus(pending.meta.requestId);}
+function send(){busy=true;lock();staffRun(pending.meta).withSuccessHandler(success).withFailureHandler(function(e){busy=false;lock();message((e.message||e)+' 保存結果を確認してください。');}).saveRinkCondition(pending.input);}
+window.loadRinkConditionHistory=function(date){staffRun().withSuccessHandler(function(v){if($('dateSelect').value===date)records($('rinkConditionHistory'),v.records);}).withFailureHandler(function(e){$('rinkConditionHistory').textContent='整氷履歴を取得できません：'+(e.message||e);}).getRinkConditionView(date);};
+document.addEventListener('DOMContentLoaded',function(){storageKey='icepark.rink.pending.'+staffId+'.'+(new URLSearchParams(location.search).get('session')||sessionToken);try{pending=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch(e){}if(pending&&pending.meta&&pending.input)check();else{pending=null;refreshed();}});
+$('rinkRefresh').onclick=function(){if(busy)return;if(pending)check();else{busy=true;lock();refreshed();}};
+$('rinkSave').onclick=function(){if(busy||pending||!view)return;var input={businessDate:day(),phase:$('rinkPhase').value,level:$('rinkLevel').value,melting:$('rinkMelting').value,startTime:$('rinkStart').value,endTime:$('rinkEnd').value,condition:$('rinkState').value,note:$('rinkNote').value.trim(),expectedVersion:view.version};if(!input.level||!input.melting||!input.phase||!input.startTime||!input.endTime||!input.condition){message('区分・開始と終了時刻・レベル・溶けの有無・状態を入力してください。');return;}if(input.condition!=='GOOD'&&!input.note){message('注意・要対応の理由と対応を入力してください。');return;}pending={input:input,meta:makeStaffOperation_()};persist();send();};
+})();
+</script>
+
+
+      <div class="card">
+        <div class="section-title">本日の運営日報</div>
+        <div class="field"><label for="fuelLiters">給油量（L）</label><input id="fuelLiters" type="number" min="0.01" step="any" inputmode="decimal" placeholder="給油していない日は空欄"><p class="loading">給油した日だけ数量を入力します。給油していない日は空欄のまま保存・転記します。</p></div>
+        <div class="field"><label for="cleaning">会場内の清掃（必須）</label><select id="cleaning" required><option value="">選択してください</option><option value="DONE">実施済み</option><option value="NOT_DONE">未実施</option></select></div>
+        <div class="field"><label for="iceBefore">開始前の整氷（必須）</label><select id="iceBefore" required><option value="">選択してください</option><option value="DONE">実施済み</option><option value="NOT_DONE">未実施</option></select></div>
+        <div class="field"><label for="iceAfter">終了時の整氷（必須）</label><select id="iceAfter" required><option value="">選択してください</option><option value="DONE">実施済み</option><option value="NOT_DONE">未実施</option></select></div>
+        <div class="field">
+          <label for="noteContent">備考（未実施の場合は理由を入力）</label>
+          <textarea id="noteContent" rows="4" placeholder="例：14時頃、来場者が集中し受付が一時混雑。整氷は予定通り実施。"></textarea>
+        </div>
+        <button class="btn" id="addBtn" style="width:100%;">日報を保存する</button>
+        <p id="dailySaveStatus" class="loading" role="status" aria-live="polite"></p>
+        <button class="btn btn-outline" id="dailyRefresh" type="button">最新の保存状態を確認</button>
+        <button class="btn btn-outline" id="fuelRetry" type="button" style="display:none;">給油・整氷・清掃の転記を再確認（管理者）</button>
+      </div>
+
+      <div class="card" id="adminCard" style="display:none;">
+        <div class="section-title">
+          <span>日報を閲覧（管理者のみ）</span>
+        </div>
+        <div class="field">
+          <label>日付を選択</label>
+          <select id="dateSelect"></select>
+        </div>
+        <button class="btn btn-outline" id="loadBtn" style="width:100%;">この日の日報を表示する</button>
+        <div id="dailyHistory" class="mt-16"></div>
+        <div id="rinkConditionHistory" class="mt-16"></div>
+        <div id="notesList" class="mt-16"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    var isAdmin = false;
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() { document.getElementById('errorBox').style.display = 'none'; }
+
+    function todayKey() {var p={};new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).forEach(function(v){p[v.type]=v.value;});return p.year+'-'+p.month+'-'+p.day;}
+    var dailyExpectedVersion='',dailyReady=false,dailyBusy=false,dailyPending=null;
+    function showDailyStatus(v){dailyExpectedVersion=v.expectedVersion;dailyReady=true;var state=v.transfer&&v.transfer.state;document.getElementById('dailySaveStatus').textContent=!v.report?'本日の日報は未保存です。':state==='SYNCED'?'日報保存済み・給油・整氷・清掃の転記を確認済み':state==='TEST_ONLY'?'テスト環境に保存済み（実帳票への転記なし）':'日報保存済み・給油・整氷・清掃欄は未転記／要確認。'+(v.transfer&&v.transfer.error||'');document.getElementById('fuelRetry').style.display=isAdmin&&v.report&&state!=='SYNCED'?'inline-block':'none';}
+    function refreshDaily(fill){staffRun().withSuccessHandler(function(v){showDailyStatus(v);if(fill&&v.report){document.getElementById('fuelLiters').value=v.report.fuelLiters===null?'':v.report.fuelLiters;['cleaning','iceBefore','iceAfter'].forEach(function(k){document.getElementById(k).value=v.report[k];});document.getElementById('noteContent').value=v.report.note;}}).withFailureHandler(function(e){showError(e.message||e);}).getDailyOperationsReportView(todayKey());}
+    document.getElementById('dailyRefresh').onclick=function(){refreshDaily(false);};
+    document.getElementById('fuelRetry').onclick=function(){if(!dailyReady||dailyBusy)return;dailyBusy=true;staffRun(makeStaffOperation_()).withSuccessHandler(function(v){dailyBusy=false;showDailyStatus(v);}).withFailureHandler(function(e){dailyBusy=false;showError(e.message||e);}).retryDailyFuelTransfer(todayKey(),dailyExpectedVersion);};
+
+    document.getElementById('addBtn').addEventListener('click', function () {
+      clearError();
+      if(dailyBusy||!dailyReady){showError('最新の保存状態を確認してから操作してください。');return;}
+      var raw=document.getElementById('fuelLiters').value.trim(),payload={businessDate:todayKey(),fuelLiters:raw===''?null:Number(raw),note:document.getElementById('noteContent').value,expectedVersion:dailyExpectedVersion};
+      ['cleaning','iceBefore','iceAfter'].forEach(function(k){payload[k]=document.getElementById(k).value;});
+      if([payload.cleaning,payload.iceBefore,payload.iceAfter].some(function(v){return !v;})){showError('清掃・開始前と終了時の整氷をすべて選択してください。');return;}
+      if(raw!==''&&(!Number.isFinite(payload.fuelLiters)||payload.fuelLiters<=0)){showError('給油していない日は空欄にしてください。');return;}
+      if([payload.cleaning,payload.iceBefore,payload.iceAfter].indexOf('NOT_DONE')!==-1&&!payload.note.trim()){showError('未実施の理由を備考に入力してください。');return;}
+      var signature=JSON.stringify(payload);if(dailyPending&&dailyPending.signature!==signature){showError('前回の保存状態を確認してから入力を変更してください。');return;}dailyPending=dailyPending||{signature:signature,meta:makeStaffOperation_()};dailyBusy=true;document.getElementById('addBtn').disabled=true;
+      staffRun(dailyPending.meta).withSuccessHandler(function(v){dailyBusy=false;dailyPending=null;document.getElementById('addBtn').disabled=false;showDailyStatus(v);if(isAdmin)loadDates();}).withFailureHandler(function(err){dailyBusy=false;document.getElementById('addBtn').disabled=false;showError((err.message||err)+' 保存成否が不明な場合は同じ内容で保存状態を確認してください。');staffRun().withSuccessHandler(function(s){if(s.state==='DONE'){dailyPending=null;showDailyStatus(s.result);if(isAdmin)loadDates();}else if(s.state==='REJECTED'){dailyPending=null;refreshDaily(false);}else if(s.state!=='NOT_FOUND'){showError('保存途中の可能性があります。再登録せず管理者に確認してください。');dailyReady=false;}}).getStaffMutationStatus(dailyPending.meta.requestId);}).saveDailyOperationsReport(payload);
+    });
+
+    function renderNotes(list) {
+      var box = document.getElementById('notesList');
+      if (list.length === 0) {
+        box.innerHTML = '<div class="empty-hint">この日のコメントはありません</div>';
+        return;
+      }
+      box.innerHTML = '';
+      list.forEach(function (n) {
+        var row = document.createElement('div');
+        row.className = 'list-row';
+        var top=document.createElement('div');top.className='list-row-top';var name=document.createElement('div');name.className='list-row-ticket';name.textContent=n.staffName;var time=document.createElement('span');time.className='tag';time.textContent=n.createdAtLabel;top.append(name,time);var content=document.createElement('div');content.className='list-row-sub';content.style.whiteSpace='pre-wrap';content.textContent=n.content;var actions=document.createElement('div');actions.className='list-row-actions';var del=document.createElement('button');del.className='btn-sm btn-danger del-btn';del.dataset.id=n.noteId;del.textContent='削除';actions.appendChild(del);row.append(top,content,actions);
+        box.appendChild(row);
+      });
+      document.querySelectorAll('.del-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var noteId = btn.getAttribute('data-id');
+          if (!window.confirm('このコメントを削除します。よろしいですか？')) return;
+          clearError();
+          staffRun()
+            .withSuccessHandler(function () { loadNotesForSelectedDate(); })
+            .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+            .deleteDailyReportNote(noteId, staffId);
+        });
+      });
+    }
+
+    function loadNotesForSelectedDate() {
+      var date = document.getElementById('dateSelect').value;
+      if (!date) return;
+      if(window.loadRinkConditionHistory)window.loadRinkConditionHistory(date);
+      clearError();
+      staffRun().withSuccessHandler(function(v){var box=document.getElementById('dailyHistory');box.replaceChildren();if(!v.report){box.textContent='この日の運営チェックは未登録です。';return;}var r=v.report;[['給油量',r.fuelLiters===null?'給油なし（空欄）':r.fuelLiters+' L'],['会場内の清掃',r.cleaning==='DONE'?'実施済み':'未実施'],['開始前の整氷',r.iceBefore==='DONE'?'実施済み':'未実施'],['終了時の整氷',r.iceAfter==='DONE'?'実施済み':'未実施'],['備考',r.note||'—']].forEach(function(pair){var p=document.createElement('p');p.textContent=pair[0]+'：'+pair[1];box.appendChild(p);});}).withFailureHandler(function(e){document.getElementById('dailyHistory').textContent='運営チェックを取得できません。';}).getDailyOperationsReportView(date);
+      staffRun()
+        .withSuccessHandler(renderNotes)
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .getDailyReportNotesView(date, staffId);
+    }
+
+    document.getElementById('loadBtn').addEventListener('click', loadNotesForSelectedDate);
+
+    function loadDates() {
+      staffRun()
+        .withSuccessHandler(function (dates) {
+          var sel = document.getElementById('dateSelect');
+          var today = todayKey();
+          if (dates.indexOf(today) === -1) dates.unshift(today);
+          sel.innerHTML = '';
+          dates.forEach(function (d) {
+            var opt = document.createElement('option');
+            opt.value = d; opt.textContent = d;
+            sel.appendChild(opt);
+          });
+          loadNotesForSelectedDate();
+        })
+        .withFailureHandler(function () { /* 管理者以外はここに来る想定。何もしない */ })
+        .getDailyReportDates(staffId);
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+            isAdmin = (staff.role === 'ADMIN');
+            document.getElementById('adminCard').style.display = isAdmin ? 'block' : 'none';
+            refreshDaily(true);
+            if (isAdmin) loadDates();
+          }
+        })
+        .getStaffById(staffId);
+    }
+
+    renderAdminSidebar('dailyreport');
+    loadStaffLabel();
+  </script>
+</body>
+</html>

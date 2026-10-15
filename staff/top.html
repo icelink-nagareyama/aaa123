@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+
+</head>
+<body data-layout-page="Top" class="layout-refresh layout-dashboard">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">ダッシュボード</h1><div class="page-header-sub" id="todayLabel">-</div>
+          <div class="page-header-sub">エキサイティングアイスパーク in 流山　管理画面</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div class="page-header-meta mt-16" id="headerInfoChips" style="margin-bottom:14px;">
+        <button type="button" class="btn btn-outline" id="customizeToggleBtn" style="cursor:pointer; background:var(--brand); color:#fff; border-color:var(--brand);">⚙ カスタマイズ</button>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+
+
+      <section id="dashboardFlow" class="ops-flow" aria-label="本日の運営フロー"></section>
+      <section class="dashboard-stats" aria-label="本日の人数"><div class="grid" id="statGrid"><div class="loading">読み込み中...</div></div></section>
+      <section id="dashboardFacts" class="ops-facts" aria-label="本日の運営情報"></section>
+      <p id="dashboardOperationsError" class="ops-error" role="status"></p>
+      <section class="desk-launchers" aria-label="受付の主要操作">
+        <button class="btn desk-launch" id="deskFind">受付番号検索</button>
+        <button class="btn desk-launch" id="deskNew">新規受付</button>
+        <button class="btn desk-launch" id="deskPass">パス保有者の受付</button>
+      </section>
+      <div id="deskNotice" role="status" class="loading"></div>
+      <div class="desk-columns">
+        <section id="deskReception" class="desk-reception" aria-label="受付フォーム">
+          <script>window.receptionEmbedded_=true;var staffId=window.staffPortal.staffId;var sessionToken=window.staffPortal.sessionToken;var baseUrl=window.staffPortal.baseUrl;</script>
+                <div id="receptionErrorBox" class="msg-error" style="display:none;" role="alert"></div>
+      <div id="receptionRecovery" class="card" style="display:none;">
+        <p id="receptionRecoveryMessage"></p>
+        <button class="btn btn-outline" id="checkReceptionSave">保存状態を確認</button>
+        <button class="btn btn-outline" id="retryReceptionSave" style="display:none;">同じ操作番号で再送信</button>
+        <button class="btn btn-outline" id="reloadReception" style="display:none;">既存番号から内容を読み直す</button>
+      </div>
+
+      <!-- 1. 受付方法を選ぶ -->
+      <div id="searchCard" class="reception-start">
+        <div class="card">
+          <div class="section-eyebrow">受付番号をお持ちの方</div>
+          <div class="section-title">番号で受付内容を確認</div>
+          <div class="field">
+            <label for="searchTicketNo">お客様の受付番号</label>
+            <input type="text" id="searchTicketNo" class="search-number" placeholder="001" inputmode="numeric" autofocus>
+          </div>
+          <button class="btn" id="searchBtn" style="width:100%;">受付番号を検索</button>
+        </div>
+        <div class="card reception-new" id="receptionNewCard">
+          <div class="section-eyebrow">直接ご来場の方</div>
+          <div class="section-title">新しい受付をはじめる</div>
+          <p class="loading" style="margin:0 0 24px;">受付番号がない方や、パスをお持ちの方はこちらから登録できます。</p>
+          <a href="#" id="toWalkInLink" class="btn btn-outline">新規受付へ進む</a>
+        </div>
+      </div>
+
+      <!-- 2. 内容確認・修正フォーム（検索ヒット時／新規受付時 共通） -->
+      <div class="two-col reception-form" id="formCard" style="display:none;">
+        <div class="card">
+          <div id="formModeLabel" class="tag mt-16" style="display:inline-block; margin-bottom:10px;"></div>
+          <p id="receptionConsentSummary" class="loading" style="white-space:pre-line;"></p>
+          <p id="receptionOptionSummary" class="loading"></p>
+          <div class="field">
+            <label>受付番号</label>
+            <input type="text" id="formTicketNo" disabled style="background:#f4f7fa;">
+          </div>
+          <div class="field">
+            <label>お名前（任意）</label>
+            <input type="text" id="customerName" placeholder="山田太郎">
+          </div>
+          <div class="card pass-panel">
+            <div class="section-title">パス保有者を追加</div>
+            <div class="loading">氏名またはパス番号で検索して追加してください。追加した方は来場人数へ自動反映され、入場料はかかりません。</div>
+            <div class="field mt-16"><label for="passSearchInput">氏名・パス番号</label>
+              <input type="text" id="passSearchInput" placeholder="例：山田、SP0001"></div>
+            <button type="button" class="btn btn-outline" id="passSearchBtn">パス保有者を検索</button>
+            <div id="passSearchResults" class="mt-16"></div>
+            <div class="section-title mt-16">今回のパス利用者</div>
+            <div id="selectedPassList"></div>
+            <input type="hidden" id="seasonPassNos">
+            <div class="loading" id="seasonPassStatus" style="margin-top:4px;"></div>
+          </div>
+          <div class="section-title reception-section">来場人数</div>
+          <div class="grid reception-people">
+            <div class="field">
+              <label>大人の合計（パス利用者を含む）</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="adults" data-delta="-1">−</button>
+                <input type="number" id="adults" class="stepper-input" min="0" value="0" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-target="adults" data-delta="1">＋</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>子供の合計（パス利用者を含む）</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="children" data-delta="-1">−</button>
+                <input type="number" id="children" class="stepper-input" min="0" value="0" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-target="children" data-delta="1">＋</button>
+              </div>
+            </div>
+          </div>
+          <div class="section-title reception-section">追加オプション</div>
+          <div class="grid reception-options">
+            <div class="field">
+              <label>手袋S（枚）</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="glovesS" data-delta="-1">−</button>
+                <input type="number" id="glovesS" class="stepper-input" min="0" value="0" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-target="glovesS" data-delta="1">＋</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>手袋L（枚）</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="glovesL" data-delta="-1">−</button>
+                <input type="number" id="glovesL" class="stepper-input" min="0" value="0" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-target="glovesL" data-delta="1">＋</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>マイシューズ（人）</label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="myShoesCount" data-delta="-1">−</button>
+                <input type="number" id="myShoesCount" class="stepper-input" min="0" value="0" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-target="myShoesCount" data-delta="1">＋</button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>滑走補助具（台）</label>
+            <div class="stepper"><button type="button" class="stepper-btn" data-target="aidCount" data-delta="-1">−</button><input type="number" id="aidCount" class="stepper-input" min="0" value="0" inputmode="numeric"><button type="button" class="stepper-btn" data-target="aidCount" data-delta="1">＋</button></div>
+            <p class="loading">空いている補助具番号を登録時に自動割り当てします。最初の1時間分を受付料金に加算し、受付確定から貸出時間を計測します。</p>
+            <p id="aidAvailabilityLabel" class="loading"></p>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" id="isNight" style="width:auto;">
+              ナイター料金で計算する
+            </label>
+          </div>
+
+        </div>
+
+        <div class="two-col-side">
+          <div class="card fee-summary">
+            <div class="fee-summary-head">今回の受付料金</div>
+            <div class="fee-summary-body">
+              <div class="loading">お支払い予定額</div>
+              <div class="fee-preview-value" id="feePreview">-</div>
+              <div id="feeBreakdown"></div>
+              <div class="fee-help">人数やオプションを変更すると、自動で再計算します。</div>
+              <div class="reception-payment">
+          <div class="field">
+            <label>お支払い方法</label>
+            <select id="paymentMethod">
+              <option value="CASH">現金</option>
+              <option value="PAYPAY">PayPay</option>
+            </select>
+          </div>
+
+
+          <button class="btn" id="submitBtn" style="width:100%;">登録する</button>
+          <button class="btn btn-outline mt-16" id="cancelFormBtn" style="width:100%;">やめて検索に戻る</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 完了結果 -->
+      <div class="card center" id="resultCard" style="display:none; max-width:560px;">
+        <div class="success-mark" aria-hidden="true">✓</div>
+        <div class="section-title" style="justify-content:center;">受付を登録しました</div>
+        <div class="label">受付番号</div>
+        <div class="reception-result-number" id="resultTicketNo">-</div>
+        <div class="label" id="resultDetail"></div>
+        <button class="btn mt-16" id="nextBtn" style="width:100%;">次のお客様を受付する</button>
+      </div>
+<script>
+
+    var fields = ['adults', 'children', 'glovesS', 'glovesL', 'myShoesCount', 'aidCount'];
+    var previewTimer = null;
+    var mode = null; // 'existing'（受付番号あり） or 'walkin'（新規）
+    var currentTicketNo = '';
+    var selectedPasses = [];
+    var passRequestVersion = 0;
+    var formVersion = 0;
+    var previewVersion = 0;
+    var receptionVersion = '';
+    var receptionOperation = null;
+    var receptionSubmission = null;
+    var recoveryTicket = '';
+    var receptionSubmitting = false;
+    var receptionCanEdit = true;
+    var receptionStockVersion = 0;
+    function setReceptionFieldsLocked(locked) {
+      document.querySelectorAll('#formCard input, #formCard select, #formCard .stepper-btn, #cancelFormBtn').forEach(function (el) { el.disabled = locked; });
+    }
+
+    function receptionShowError(msg) {
+      var box = document.getElementById('receptionErrorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function receptionClearError() {
+      document.getElementById('receptionErrorBox').style.display = 'none';
+    }
+    var CARD_DISPLAY_ = { searchCard: 'grid', formCard: 'grid', resultCard: 'block' };
+    function showCard(name) {
+      ['searchCard', 'formCard', 'resultCard'].forEach(function (id) {
+        document.getElementById(id).style.display = (id === name) ? CARD_DISPLAY_[id] : 'none';
+      });
+    }
+
+    function currentInput() {
+      return {
+        expectedVersion: receptionVersion,
+        ticketNo: mode === 'existing' ? currentTicketNo : '',
+        customerName: document.getElementById('customerName').value,
+        adults: Number(document.getElementById('adults').value) || 0,
+        children: Number(document.getElementById('children').value) || 0,
+        aidCount: Number(document.getElementById('aidCount').value) || 0,
+        glovesS: Number(document.getElementById('glovesS').value) || 0,
+        glovesL: Number(document.getElementById('glovesL').value) || 0,
+        myShoesCount: Number(document.getElementById('myShoesCount').value) || 0,
+        isNight: document.getElementById('isNight').checked,
+        seasonPassNos: document.getElementById('seasonPassNos').value,
+        paymentMethod: document.getElementById('paymentMethod').value,
+      };
+    }
+
+    function schedulePreview() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(function () { runPreview(); runSeasonPassCheck(); }, 300);
+    }
+    function runPreview() {
+      var input = currentInput();
+      var requestVersion = ++previewVersion;
+      if (input.adults + input.children <= 0) {
+        document.getElementById('feePreview').textContent = '-';
+        document.getElementById('feeBreakdown').innerHTML = '';
+        return;
+      }
+      staffRun()
+        .withSuccessHandler(function (fee) {
+          if (requestVersion !== previewVersion) return;
+          document.getElementById('feePreview').textContent = '¥' + fee.total.toLocaleString();
+          var b = fee.breakdown || {};
+          b.seasonPassDiscount = fee.seasonPassDiscount;
+          document.getElementById('feeBreakdown').innerHTML = formatBreakdown_(b);
+        })
+        .withFailureHandler(function () {
+          if (requestVersion !== previewVersion) return;
+          document.getElementById('feePreview').textContent = '-';
+          document.getElementById('feeBreakdown').innerHTML = '';
+        })
+        .previewReceptionFee(input);
+    }
+
+    // 見込み金額の内訳（小計）を1行ずつのHTMLにする。0件の項目は表示しない。
+    function formatBreakdown_(b) {
+      if (!b) return '';
+      var lines = [];
+      function yen(n) { return '¥' + Number(n).toLocaleString(); }
+      if (b.isNight) {
+        if (b.adultsRemaining > 0) lines.push('大人（ナイター）×' + b.adultsRemaining + '　' + yen(b.adultPrice) + '×' + b.adultsRemaining + '＝' + yen(b.adultsRemaining * b.adultPrice));
+        if (b.childrenRemaining > 0) lines.push('子供（ナイター）×' + b.childrenRemaining + '　' + yen(b.childPrice) + '×' + b.childrenRemaining + '＝' + yen(b.childrenRemaining * b.childPrice));
+      } else {
+        if (b.pairs > 0) lines.push('親子ペア×' + b.pairs + '　' + yen(b.pairPrice) + '×' + b.pairs + '＝' + yen(b.pairs * b.pairPrice));
+        if (b.adultsRemaining > 0) lines.push('大人×' + b.adultsRemaining + '　' + yen(b.adultPrice) + '×' + b.adultsRemaining + '＝' + yen(b.adultsRemaining * b.adultPrice));
+        if (b.childrenRemaining > 0) lines.push('子供×' + b.childrenRemaining + '　' + yen(b.childPrice) + '×' + b.childrenRemaining + '＝' + yen(b.childrenRemaining * b.childPrice));
+      }
+      if (b.gloves > 0) lines.push('手袋×' + b.gloves + '　' + yen(b.glovePrice) + '×' + b.gloves + '＝' + yen(b.gloves * b.glovePrice));
+      if (b.aidMin > 0) lines.push('補助具 ' + (b.aidCount || 1) + '台（最初の1時間）　＋' + yen(b.aidFee));
+      if (b.extendMin > 0) lines.push('延長 ' + b.extendMin + '分　＋' + yen(b.extendFee));
+      if (b.myShoesCount > 0) lines.push('マイシューズ×' + b.myShoesCount + '　−' + yen(b.myShoesCount * b.myShoesDiscount));
+      if (b.seasonPassDiscount) {
+        var sp = b.seasonPassDiscount;
+        var parts = [];
+        if (sp.adultCount > 0) parts.push('大人' + sp.adultCount + '名');
+        if (sp.childCount > 0) parts.push('子供' + sp.childCount + '名');
+        lines.push('<span style="color:#1268AD;">パス利用（' + parts.join('・') + '）　入場料対象外</span>');
+      }
+      if (lines.length === 0) return '';
+      return lines.map(function (l) { return '<div>' + l + '</div>'; }).join('');
+    }
+    function passCount(isAdult) { return selectedPasses.filter(function (p) { return p.isAdult === isAdult; }).length; }
+    function renderSelectedPasses() {
+      document.getElementById('seasonPassNos').value = selectedPasses.map(function (p) { return p.passNo; }).join(',');
+      var box = document.getElementById('selectedPassList'); box.innerHTML = '';
+      if (!selectedPasses.length) { box.textContent = 'パス利用者は未追加です'; return; }
+      selectedPasses.forEach(function (p) {
+        var row = document.createElement('div'); row.className = 'list-row';
+        var label = document.createElement('div');
+        label.textContent = p.holderName + '様 ／ ' + p.passNo + ' ／ ' + p.planName;
+        var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn btn-outline btn-sm mt-16'; remove.textContent = '受付から外す';
+        remove.addEventListener('click', function () {
+          selectedPasses = selectedPasses.filter(function (x) { return x.passNo !== p.passNo; });
+          var input = document.getElementById(p.isAdult ? 'adults' : 'children');
+          input.value = Math.max(passCount(p.isAdult), Number(input.value) - 1);
+          passRequestVersion++; renderSelectedPasses(); schedulePreview();
+        });
+        row.appendChild(label); row.appendChild(remove); box.appendChild(row);
+      });
+    }
+    function runSeasonPassCheck() {
+      var statusBox = document.getElementById('seasonPassStatus');
+      var raw = document.getElementById('seasonPassNos').value.trim();
+      var version = ++passRequestVersion;
+      if (!raw) { statusBox.textContent = ''; return; }
+      statusBox.textContent = '利用条件を確認中…';
+      staffRun().withSuccessHandler(function (info) {
+        if (version !== passRequestVersion) return;
+        selectedPasses = info.passHolders; renderSelectedPasses();
+        statusBox.textContent = '大人' + info.seasonPassAdultCount + '名・子供' + info.seasonPassChildCount + '名は入場料対象外';
+        statusBox.style.color = '#1268AD';
+      }).withFailureHandler(function (err) {
+        if (version !== passRequestVersion) return;
+        statusBox.textContent = err && err.message ? err.message : err; statusBox.style.color = '#b91c1c';
+      }).validateSeasonPassesForReceptionApi(raw, mode === 'existing' ? currentTicketNo : '');
+    }
+    function addPassToReception(pass, button) {
+      if (selectedPasses.some(function (p) { return p.passNo === pass.passNo; })) { receptionShowError('このパスは追加済みです'); if (button) button.disabled = false; return; }
+      var proposed = selectedPasses.map(function (p) { return p.passNo; }).concat([pass.passNo]);
+      var version = ++passRequestVersion;
+      staffRun().withSuccessHandler(function (info) {
+        if (version !== passRequestVersion) return;
+        selectedPasses = info.passHolders;
+        var input = document.getElementById(pass.isAdult ? 'adults' : 'children');
+        input.value = (Number(input.value) || 0) + 1;
+        renderSelectedPasses(); receptionClearError();
+        document.getElementById('passSearchResults').innerHTML = '';
+        document.getElementById('passSearchInput').value = '';
+        schedulePreview();
+      }).withFailureHandler(function (err) { if (button) button.disabled = false; if (version === passRequestVersion) receptionShowError(err.message || err); })
+        .validateSeasonPassesForReceptionApi(proposed, mode === 'existing' ? currentTicketNo : '');
+    }
+    document.getElementById('passSearchBtn').addEventListener('click', function () {
+      var query = document.getElementById('passSearchInput').value.trim();
+      if (!query) { receptionShowError('氏名またはパス番号を入力してください'); return; }
+      var box = document.getElementById('passSearchResults'); box.textContent = '検索中…';
+      var version = formVersion;
+      document.getElementById('passSearchBtn').disabled = true;
+      staffRun().withSuccessHandler(function (list) {
+        document.getElementById('passSearchBtn').disabled = false;
+        if (version !== formVersion) return;
+        box.innerHTML = '';
+        if (!list.length) { box.textContent = '該当するパス保有者が見つかりません'; return; }
+        list.forEach(function (p) {
+          var row = document.createElement('div'); row.className = 'list-row';
+          var label = document.createElement('div'); label.textContent = p.holderName + '様 ／ ' + p.passNo + ' ／ ' + p.planName;
+          var detail = document.createElement('div'); detail.className = 'loading';
+          detail.textContent = '有効期限 ' + p.validToLabel + (p.reason ? ' ／ ' + p.reason : '');
+          var add = document.createElement('button'); add.type = 'button'; add.className = 'btn btn-sm mt-16';
+          var already = selectedPasses.some(function (x) { return x.passNo === p.passNo; });
+          add.textContent = already ? '追加済み' : p.canUse ? '受付に追加' : '本日は利用できません';
+          add.disabled = already || !p.canUse;
+          add.addEventListener('click', function () { add.disabled = true; addPassToReception(p, add); });
+          row.appendChild(label); row.appendChild(detail); row.appendChild(add); box.appendChild(row);
+        });
+      }).withFailureHandler(function (err) {
+        document.getElementById('passSearchBtn').disabled = false;
+        if (version === formVersion) { box.textContent = ''; receptionShowError(err.message || err); }
+      }).searchReceptionPassHolders(query, mode === 'existing' ? currentTicketNo : '');
+    });
+    document.getElementById('passSearchInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('passSearchBtn').click(); }
+    });
+    fields.concat(['isNight', 'customerName', 'seasonPassNos']).forEach(function (id) {
+      document.getElementById(id).addEventListener('input', function () {
+        if (id === 'adults' || id === 'children') this.value = Math.max(passCount(id === 'adults'), Number(this.value) || 0);
+        schedulePreview();
+      });
+      document.getElementById(id).addEventListener('change', schedulePreview);
+    });
+
+    // ＋／−ボタン：対象inputの値を増減する（0未満にはしない）
+    document.querySelectorAll('.stepper-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.getAttribute('data-target'));
+        var delta = Number(btn.getAttribute('data-delta'));
+        var current = Number(input.value) || 0;
+        var next = Math.max(0, current + delta);
+        input.value = next;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+
+    function resetForm() {
+      receptionVersion = ''; receptionOperation = null; receptionSubmission = null; recoveryTicket = '';
+      receptionCanEdit = true;
+      setReceptionFieldsLocked(false);
+      document.getElementById('receptionRecovery').style.display = 'none';
+      document.getElementById('submitBtn').disabled = false;
+      clearTimeout(previewTimer); passRequestVersion++; formVersion++; previewVersion++;
+      selectedPasses = []; renderSelectedPasses();
+      document.getElementById('passSearchResults').innerHTML = '';
+      document.getElementById('passSearchInput').value = '';
+      fields.forEach(function (id) { document.getElementById(id).value = 0; });
+      document.getElementById('customerName').value = '';
+      document.getElementById('receptionConsentSummary').textContent = '';
+      document.getElementById('receptionOptionSummary').textContent = '';
+      document.getElementById('isNight').checked = false;
+      document.getElementById('paymentMethod').value = 'CASH';
+      document.getElementById('seasonPassNos').value = '';
+      document.getElementById('seasonPassStatus').textContent = '';
+      document.getElementById('feePreview').textContent = '-';
+      document.getElementById('feeBreakdown').innerHTML = '';
+      document.getElementById('searchTicketNo').value = '';
+      currentTicketNo = '';
+    }
+
+    function fillFormFromTicket(q) {
+      document.getElementById('receptionOptionSummary').textContent = q.optionsRequested ? 'オプションはLINE事前受付での希望数です。手袋・補助具の在庫、マイシューズの持参、最終料金を確認して確定してください。' : '';
+      document.getElementById('receptionConsentSummary').textContent = '同意書：' + ({SUBMITTED:'提出済み',PAPER:'確認済み（紙）'}[q.consentStatus] || '未提出') + (q.consentFamilyNames ? '\n対象のご家族：'+q.consentFamilyNames+'\n今回の利用者が対象のご家族に含まれることを確認してください。人数を変更した場合は同意の適用も再確認してください。' : '');
+      receptionVersion = q.version || '';
+      receptionCanEdit = q.editAllowed !== false;
+      document.getElementById('submitBtn').disabled = !receptionCanEdit;
+      if (!receptionCanEdit) receptionShowError(q.editBlockedReason);
+      document.getElementById('formTicketNo').value = q.ticketNo;
+      document.getElementById('customerName').value = q.customerName || '';
+      document.getElementById('adults').value = q.adultCount || 0;
+      document.getElementById('children').value = q.childCount || 0;
+      document.getElementById('aidCount').value = q.aidCount || 0;
+      document.getElementById('glovesS').value = q.confirmedGlovesS || 0;
+      document.getElementById('glovesL').value = q.confirmedGlovesL || 0;
+      document.getElementById('myShoesCount').value = q.confirmedMyShoesCount || 0;
+      document.getElementById('isNight').checked = !!q.isNighter;
+      document.getElementById('paymentMethod').value = q.paymentMethod || 'CASH';
+      selectedPasses = q.seasonPassHolders || [];
+      renderSelectedPasses();
+      document.getElementById('seasonPassNos').value = q.seasonPassNos || '';
+      runPreview();
+      runSeasonPassCheck();
+    }
+
+    // ---- 1. 受付番号検索 ----
+    document.getElementById('searchBtn').addEventListener('click', function () {
+      if (receptionSubmitting || (receptionOperation && document.getElementById('receptionRecovery').style.display !== 'none')) { receptionShowError('先に保存状態を確認してください。'); return; }
+      receptionClearError();
+      var ticketNo = document.getElementById('searchTicketNo').value.trim();
+      if (!ticketNo) {
+        receptionShowError('受付番号を入力してください');
+        return;
+      }
+      document.getElementById('searchBtn').disabled = true;
+      staffRun()
+        .withSuccessHandler(function (q) {
+          document.getElementById('searchBtn').disabled = false;
+          mode = 'existing';
+          resetForm();
+          currentTicketNo = q.ticketNo;
+          document.getElementById('formModeLabel').textContent = '受付番号あり（内容を確認・修正してください）';
+          fillFormFromTicket(q);
+          showCard('formCard');
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('searchBtn').disabled = false;
+          receptionShowError((err && err.message ? err.message : err));
+        })
+        .getTicketForReception(ticketNo);
+    });
+
+    // ---- 受付番号なし（新規受付）へ切替 ----
+    function startWalkInReception_() {
+      if (receptionSubmitting || (receptionOperation && document.getElementById('receptionRecovery').style.display !== 'none')) { receptionShowError('先に保存状態を確認してください。'); return false; }
+      receptionClearError();
+      mode = 'walkin';
+      currentTicketNo = '';
+      resetForm();
+      document.getElementById('formTicketNo').value = '（登録時に発行されます）';
+      document.getElementById('formModeLabel').textContent = '新規受付（受付番号なし）';
+      showCard('formCard');
+      return true;
+    }
+    document.getElementById('toWalkInLink').addEventListener('click', function (e) {
+      e.preventDefault();
+      startWalkInReception_();
+    });
+
+    document.getElementById('cancelFormBtn').addEventListener('click', function () {
+      receptionClearError();
+      resetForm();
+      showCard('searchCard');
+    });
+
+    // ---- 2. 登録する ----
+    document.getElementById('submitBtn').addEventListener('click', function () {
+      if (receptionSubmitting || !receptionCanEdit) return;
+      receptionClearError();
+      var input = currentInput();
+      if (input.adults + input.children <= 0) {
+        receptionShowError('人数を入力してください（大人・子供のいずれか1名以上）');
+        return;
+      }
+      if (!Number.isInteger(input.adults) || !Number.isInteger(input.children) || input.adults < passCount(true) || input.children < passCount(false)) {
+        receptionShowError('パス利用者を含めた人数を正しく入力してください'); return;
+      }
+      if (!Number.isInteger(input.aidCount) || input.aidCount < 0) { receptionShowError('補助具の台数を正しく入力してください'); return; }
+      document.getElementById('submitBtn').disabled = true;
+      receptionSubmitting = true;
+      setReceptionFieldsLocked(true);
+      receptionOperation = receptionOperation || makeStaffOperation_();
+      receptionSubmission = { mode: mode, ticketNo: currentTicketNo, input: input };
+
+      function onSuccess(res) {
+        receptionClearError();
+        receptionSubmitting = false;
+        setReceptionFieldsLocked(false);
+        document.getElementById('receptionRecovery').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+        showCard('resultCard');
+        document.getElementById('resultTicketNo').textContent = res.ticketNo;
+        document.getElementById('resultDetail').textContent =
+          '大人' + res.adults + '名・子供' + res.children + '名（' + (res.isNight ? 'ナイター料金' : '通常料金')
+          + '）　お支払い金額 ¥' + res.fee.total.toLocaleString()
+          + (res.aidNumbers && res.aidNumbers.length ? '　／　貸し出す補助具番号：' + res.aidNumbers.join('、') : '')
+          + (res.seasonPassLabels && res.seasonPassLabels.length ? '　／　パス利用：' + res.seasonPassLabels.join('、') : '');
+      }
+      function onFailure(err) {
+        receptionSubmitting = false;
+        receptionShowError('登録に失敗しました：' + (err && err.message ? err.message : err));
+        document.getElementById('receptionRecovery').style.display = 'block';
+        document.getElementById('receptionRecoveryMessage').textContent = '入力内容は保持しています。再登録前に保存状態を確認してください。';
+        recoveryTicket = currentTicketNo;
+        document.getElementById('reloadReception').style.display = recoveryTicket ? 'inline-block' : 'none';
+        checkReceptionSave();
+      }
+      receptionSubmission.onSuccess = onSuccess; receptionSubmission.onFailure = onFailure;
+      sendReceptionSubmission();
+    });
+
+    function sendReceptionSubmission() {
+      if (!receptionSubmission) return;
+      receptionSubmitting = true;
+      document.getElementById('submitBtn').disabled = true;
+      var s = receptionSubmission;
+      if (s.mode === 'existing') {
+        staffRun(receptionOperation).withSuccessHandler(s.onSuccess).withFailureHandler(s.onFailure)
+          .confirmReceptionDetails(s.ticketNo, s.input, staffId);
+      } else {
+        staffRun(receptionOperation).withSuccessHandler(s.onSuccess).withFailureHandler(s.onFailure)
+          .issueWalkInTicket(s.input, staffId);
+      }
+    }
+    function checkReceptionSave() {
+      if (!receptionOperation) return;
+      staffRun().withSuccessHandler(function (s) {
+        if (s.state === 'DONE' && s.result && receptionSubmission) {
+          receptionSubmission.onSuccess(s.result);
+          window.dispatchEvent(new CustomEvent('staff-operation-complete', { detail: { action:s.action, result:s.result } }));
+          return;
+        }
+        recoveryTicket = s.ticketNo || currentTicketNo;
+        document.getElementById('receptionRecoveryMessage').textContent =
+          (recoveryTicket ? '受付番号 ' + recoveryTicket + ' ／ ' : '') +
+          ({ PARTIAL:'一部保存されています。新規登録せず、既存番号から内容を確認してください。', STARTED:'処理中または保存成否が不明です。保存状態を再確認してください。',
+             REJECTED:'保存前に停止しました。内容を確認し、必要なら読み直してください。', NOT_FOUND:'保存記録がまだ見つかりません。入力を変えず同じ操作番号で再送信できます。' }[s.state] || s.message);
+        document.getElementById('retryReceptionSave').style.display = s.state === 'NOT_FOUND' ? 'inline-block' : 'none';
+        document.getElementById('reloadReception').style.display = recoveryTicket ? 'inline-block' : 'none';
+        if (s.state === 'REJECTED') { receptionOperation = null; setReceptionFieldsLocked(false); document.getElementById('submitBtn').disabled = !receptionCanEdit; }
+      }).withFailureHandler(function () { document.getElementById('receptionRecoveryMessage').textContent = '保存状態も取得できません。入力を保持し、接続復旧後に確認してください。'; }).getStaffMutationStatus(receptionOperation.requestId);
+    }
+    document.getElementById('checkReceptionSave').addEventListener('click', checkReceptionSave);
+    document.getElementById('retryReceptionSave').addEventListener('click', function () { if (!receptionSubmitting) sendReceptionSubmission(); });
+    document.getElementById('reloadReception').addEventListener('click', function () {
+      if (!recoveryTicket || !window.confirm('現在の入力と最新の保存内容を確認し、保存内容をフォームへ読み直します。よろしいですか？')) return;
+      staffRun().withSuccessHandler(function (q) { mode = 'existing'; currentTicketNo = q.ticketNo; receptionOperation = null; receptionSubmission = null; setReceptionFieldsLocked(false); receptionClearError(); fillFormFromTicket(q); document.getElementById('receptionRecovery').style.display = 'none'; }).withFailureHandler(function (e) { receptionShowError(e.message); }).getTicketForReception(recoveryTicket);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', function () {
+      resetForm();
+      receptionClearError();
+      showCard('searchCard');
+    });
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+          }
+        })
+        .getStaffById(staffId);
+    }
+    function loadReceptionAidStock() {
+      var version = ++receptionStockVersion;
+      staffRun().withSuccessHandler(function (v) { if (version === receptionStockVersion) document.getElementById('aidAvailabilityLabel').textContent = '現在の空き：' + v.available + '台（総在庫' + v.total + '台）'; }).withFailureHandler(function () { if (version === receptionStockVersion) document.getElementById('aidAvailabilityLabel').textContent = '在庫情報を取得できません'; }).getAidInventoryView();
+    }
+    loadReceptionAidStock();
+    setInterval(loadReceptionAidStock, 15000);
+    if (window.receptionEmbedded_) { document.getElementById('receptionNewCard').remove(); }
+    else { renderAdminSidebar('reception'); loadStaffLabel(); }
+  </script>
+
+        </section>
+        <aside class="desk-lists">
+          <section class="card"><div class="section-title">待機中・呼出中 <span id="deskQueueCount" class="tag"></span></div><div id="deskQueue"></div></section>
+          <section class="card"><div class="section-title">在場中・退場</div><label for="deskExitSearch">受付番号／バンド番号</label><input id="deskExitSearch" placeholder="001 / WB-00001"><div id="deskOnSite"></div></section>
+          <section class="card"><div class="section-title">補助具 <span id="deskAidCount" class="tag"></span></div><div class="grid"><input id="deskLoanTicket" aria-label="追加貸出の受付番号" placeholder="受付番号"><button class="btn btn-outline" id="deskLoan">追加貸出</button></div><div id="deskAid"></div></section>
+        </aside>
+      </div>
+
+      <section id="dashboardOperations" class="ops-lower" aria-label="現場オペレーションと運営状況"></section>
+      <section id="dashboardSupport" class="ops-support" aria-label="運営のヒントとシステム連携"></section>
+
+      <!-- ダッシュボード表示項目のカスタマイズ（S-73〜S-76：既存の並び替え保存APIをUIから利用） -->
+      <div class="card" id="customizeCard" style="display:none;">
+        <div class="section-title">ダッシュボード表示項目のカスタマイズ</div>
+        <p class="loading">表示する項目にチェックを入れ、↑↓で順番を調整してください（管理者のみ保存できます）。</p>
+        <div id="customizeList" class="mt-16"></div>
+        <div class="grid mt-16" style="grid-template-columns: 1fr 1fr;">
+          <button class="btn" id="customizeSaveBtn">保存する</button>
+          <button class="btn btn-outline" id="customizeCancelBtn">閉じる</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    // 注意：window.top.location.href は「読み取る」とクロスオリジンエラーになるため使わない。
+    // サーバー側（doGet）から渡された baseUrl を使ってURLを組み立てる。
+    function pageUrl(page) {
+      var url = baseUrl + '?page=' + encodeURIComponent(page);
+      
+      return url;
+    }
+
+    if (!staffId) {
+      window.top.location.href = pageUrl('login');
+    }
+
+    var WEEKDAY_JP_ = ['日', '月', '火', '水', '木', '金', '土'];
+    function renderTodayLabel() {
+      var d = new Date();
+      document.getElementById('todayLabel').textContent =
+        d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + WEEKDAY_JP_[d.getDay()] + '）';
+    }
+
+    // ---- ダッシュボード表示項目のカスタマイズ ----
+    var customizeOrder = []; // [{key, label, kind, selected}] チェックボックスの並び順そのまま保存対象になる
+
+    function loadCustomizeOptions() {
+      staffRun()
+        .withSuccessHandler(function (defs) {
+          staffRun()
+            .withSuccessHandler(function (layout) {
+              var selectedKeys = layout.map(function (d) { return d.key; });
+              var byKey = {};
+              defs.forEach(function (d) { byKey[d.key] = d; });
+              customizeOrder = selectedKeys.map(function (k) {
+                return { key: k, label: byKey[k].label, selected: true };
+              }).concat(
+                defs.filter(function (d) { return selectedKeys.indexOf(d.key) === -1; })
+                  .map(function (d) { return { key: d.key, label: d.label, selected: false }; })
+              );
+              renderCustomizeList();
+            })
+            .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+            .getDashboardLayout();
+        })
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .getDashboardItemDefs();
+    }
+
+    function renderCustomizeList() {
+      var box = document.getElementById('customizeList');
+      box.innerHTML = '';
+      customizeOrder.forEach(function (item, idx) {
+        var row = document.createElement('div');
+        row.className = 'list-row';
+        row.innerHTML =
+          '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">' +
+            '<label style="display:flex; align-items:center; gap:8px; margin:0;">' +
+              '<input type="checkbox" style="width:auto;" data-idx="' + idx + '" class="customize-check" ' + (item.selected ? 'checked' : '') + '>' +
+              item.label +
+            '</label>' +
+            '<div style="display:flex; gap:6px;">' +
+              '<button type="button" class="btn btn-outline btn-sm customize-up" data-idx="' + idx + '">↑</button>' +
+              '<button type="button" class="btn btn-outline btn-sm customize-down" data-idx="' + idx + '">↓</button>' +
+            '</div>' +
+          '</div>';
+        box.appendChild(row);
+      });
+      document.querySelectorAll('.customize-check').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          customizeOrder[Number(cb.getAttribute('data-idx'))].selected = cb.checked;
+        });
+      });
+      document.querySelectorAll('.customize-up').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = Number(btn.getAttribute('data-idx'));
+          if (i <= 0) return;
+          var tmp = customizeOrder[i - 1];
+          customizeOrder[i - 1] = customizeOrder[i];
+          customizeOrder[i] = tmp;
+          renderCustomizeList();
+        });
+      });
+      document.querySelectorAll('.customize-down').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = Number(btn.getAttribute('data-idx'));
+          if (i >= customizeOrder.length - 1) return;
+          var tmp = customizeOrder[i + 1];
+          customizeOrder[i + 1] = customizeOrder[i];
+          customizeOrder[i] = tmp;
+          renderCustomizeList();
+        });
+      });
+    }
+
+    document.getElementById('customizeToggleBtn').addEventListener('click', function () {
+      var card = document.getElementById('customizeCard');
+      var show = card.style.display === 'none';
+      card.style.display = show ? 'block' : 'none';
+      if (show) loadCustomizeOptions();
+    });
+
+    document.getElementById('customizeCancelBtn').addEventListener('click', function () {
+      document.getElementById('customizeCard').style.display = 'none';
+    });
+
+    document.getElementById('customizeSaveBtn').addEventListener('click', function () {
+      var keys = customizeOrder.filter(function (it) { return it.selected; }).map(function (it) { return it.key; });
+      if (keys.length === 0) {
+        showError('表示項目を1つ以上選択してください');
+        return;
+      }
+      clearError();
+      document.getElementById('customizeSaveBtn').disabled = true;
+      staffRun()
+        .withSuccessHandler(function () {
+          document.getElementById('customizeSaveBtn').disabled = false;
+          document.getElementById('customizeCard').style.display = 'none';
+          loadDashboard();
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('customizeSaveBtn').disabled = false;
+          showError((err && err.message ? err.message : err));
+        })
+        .saveDashboardLayout(keys, staffId);
+    });
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() {
+      document.getElementById('errorBox').style.display = 'none';
+    }
+
+    function renderStats(layout, stats) {
+      var grid = document.getElementById('statGrid');
+      grid.innerHTML = '';
+      layout.forEach(function (item) {
+        if (item.kind !== 'stat') return;
+        var card = document.createElement('div');
+        card.className = 'card ' + (item.kind === 'stat' ? 'stat-card' : 'info-card');
+        card.style.margin = '0';
+        var value = document.createElement('div');
+        value.className = 'value';
+        var hasValue = stats[item.key] !== undefined && stats[item.key] !== null;
+        value.textContent = hasValue ? String(stats[item.key]) : '—';
+        if (item.kind === 'stat' && hasValue) {
+          var unit = document.createElement('span');
+          unit.className = 'stat-unit';
+          unit.textContent = item.key === 'onIce' ? ' / 50名' : '名';
+          value.appendChild(unit);
+          if (item.key === 'waiting') {
+            var groups = document.createElement('span');
+            groups.className = 'stat-groups';
+            groups.textContent = '（' + (stats.waitingGroups == null ? '—' : stats.waitingGroups) + '組）';
+            value.appendChild(groups);
+          }
+        }
+        var label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = item.label;
+        card.appendChild(value);
+        card.appendChild(label);
+        if (item.kind === 'stat' && item.key === 'waiting') {
+          var wait = document.createElement('div');
+          wait.className = 'stat-wait';
+          wait.textContent = stats.longestWaitMinutes == null ? '最長待ち時間：取得できません' : '最長待ち時間 ' + stats.longestWaitMinutes + '分';
+          card.appendChild(wait);
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    var dashboardVersion = 0;
+    function loadDashboard() {
+      var version = ++dashboardVersion;
+      staffRun()
+        .withSuccessHandler(function (layout) {
+          staffRun()
+            .withSuccessHandler(function (stats) { if (version === dashboardVersion) renderStats(layout, stats); })
+            .withFailureHandler(function (err) {
+              showError('ダッシュボードの値取得に失敗しました：' + (err && err.message ? err.message : err));
+            })
+            .getDashboardStats();
+        })
+        .withFailureHandler(function (err) {
+          showError('ダッシュボードレイアウトの取得に失敗しました：' + (err && err.message ? err.message : err));
+        })
+        .getDashboardLayout();
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          var label = document.getElementById('staffLabel');
+          if (staff) {
+            label.textContent = staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+          } else {
+            label.textContent = '';
+            showError('担当者情報が見つかりません。再度ログインしてください。');
+          }
+        })
+        .withFailureHandler(function () {
+          document.getElementById('staffLabel').textContent = '';
+        })
+        .getStaffById(staffId);
+    }
+
+    renderAdminSidebar('top');
+    renderTodayLabel();
+    loadStaffLabel();
+    loadDashboard();
+    setInterval(loadDashboard, 30000);
+  </script>
+<style>
+  .layout-refresh #deskOnSite .desk-exit-soon { margin:12px 0 20px; }
+  .layout-refresh #deskOnSite .desk-exit-soon-title { font-size:14px; font-weight:700; color:var(--brand-dark); margin-bottom:8px; }
+  .layout-refresh #deskOnSite .desk-exit-person { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+  .layout-refresh #deskOnSite .desk-exit-person .desk-list-title { grid-column:1; font-size:15px; }
+  .layout-refresh #deskOnSite .desk-exit-person .list-row-sub { grid-column:1; margin-top:0; }
+  .layout-refresh #deskOnSite .desk-exit-person .desk-actions { grid-column:2; grid-row:1 / span 2; margin-top:0; }
+  .layout-refresh #deskOnSite .desk-exit-person .btn { min-height:44px; white-space:normal; }
+  .layout-refresh #deskOnSite .desk-exit-person:first-of-type .desk-list-title { color:var(--brand-dark); }
+</style>
+<script>
+(function () {
+  var generation = 0, snapshot = null, pending = Object.create(null), failed = Object.create(null);
+  var notice = document.getElementById('deskNotice');
+  function row(title, detail) {
+    var element = document.createElement('div'); element.className = 'list-row';
+    var label = document.createElement('div'); label.className = 'desk-list-title'; label.textContent = title;
+    var description = document.createElement('div'); description.className = 'list-row-sub'; description.textContent = detail;
+    var actions = document.createElement('div'); actions.className = 'desk-actions';
+    element.appendChild(label); element.appendChild(description); element.appendChild(actions);
+    return { element: element, actions: actions };
+  }
+  function button(parent, label, action, args, key) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-outline btn-sm';
+    b.textContent = label; b.disabled = !!pending[key]; b.dataset.operation = key;
+    b.addEventListener('click', function () { operate(action, args, key); }); parent.appendChild(b);
+  }
+  function render() {
+    if (!snapshot) return;
+    var queue = document.getElementById('deskQueue'); queue.replaceChildren();
+    document.getElementById('deskQueueCount').textContent = snapshot.queue.waiting.length + '待機／' + snapshot.queue.called.length + '呼出';
+    [['待機中',snapshot.queue.waiting],['呼出中',snapshot.queue.called]].forEach(function (group) {
+      group[1].forEach(function (q) {
+        var r = row(q.ticketNo + ' ' + group[0], (q.customerName || '') + ' 大人' + q.adultCount + '・子供' + q.childCount + (q.consentFamilyNames ? '／同意対象のご家族：'+q.consentFamilyNames : ''));
+        button(r.actions, '内容確認', 'VIEW', [q.ticketNo], 'view:' + q.ticketNo);
+        if (group[0] === '待機中') button(r.actions,'呼出','callTicketManually',[q.ticketNo,staffId],'call:' + q.ticketNo);
+        if (q.consentStatus === 'NOT_SUBMITTED') button(r.actions,'紙の同意書で受理','markConsentAsPaper',[q.ticketNo,staffId],'paper:' + q.ticketNo);
+        else if (q.receptionComplete) button(r.actions,'入場','admitToIce',[q.ticketNo,staffId],'admit:' + q.ticketNo);
+        else { var note=document.createElement('span');note.className='loading';note.textContent='受付登録が未完了です。内容確認から再確定してください。';r.actions.appendChild(note); }
+        queue.appendChild(r.element);
+      });
+    });
+    if (!queue.children.length) queue.textContent = '待機中・呼出中のお客様はいません。';
+    var box = document.getElementById('deskOnSite'); box.replaceChildren();
+    var search = document.getElementById('deskExitSearch').value.trim().toUpperCase();
+    var soon=[];snapshot.onSite.forEach(function(q){q.bands.forEach(function(b){if(b.exitScheduledAt&&Number.isFinite(new Date(b.exitScheduledAt).getTime()))soon.push({ticket:q.ticketNo,band:b});});});
+    soon.sort(function(a,b){return new Date(a.band.exitScheduledAt)-new Date(b.band.exitScheduledAt)||Number(a.ticket)-Number(b.ticket)||a.band.bandNo.localeCompare(b.band.bandNo);});
+    if(!search&&soon.length){
+      var guide=document.createElement('section');guide.className='desk-exit-soon';guide.setAttribute('aria-label','退場予定が近い方');
+      var heading=document.createElement('div');heading.className='desk-exit-soon-title';heading.textContent='退場予定が近い方（最短から'+Math.min(10,soon.length)+'人）';guide.appendChild(heading);
+      soon.slice(0,10).forEach(function(p){
+        var b=p.band,timing=b.overMinutes>0?'超過 '+b.overMinutes+'分':b.remainingMinutes===0?'退場予定時刻です':'残り '+b.remainingMinutes+'分';
+        var r=row('受付 '+p.ticket+' ／ '+(b.memberType==='ADULT'?'大人':b.memberType==='CHILD'?'子供':'利用者'),(b.exitScheduledLabel||'')+' 退場予定 ／ '+b.bandNo+' ／ '+timing);
+        r.element.className='desk-exit-person';
+        button(r.actions,b.overtimeCharge>0?'徴収確認・退場':'退場','exitWristbandAndFinalize',[b.bandNo,'',staffId],'exit:'+b.bandNo);
+        r.actions.lastElementChild.setAttribute('aria-label','受付 '+p.ticket+'、'+b.bandNo+' の退場を確認');
+        guide.appendChild(r.element);
+      });box.appendChild(guide);
+    }
+    snapshot.onSite.forEach(function (q) {
+      var ticketMatch = !search || /^\d+$/.test(search) && Number(search) === Number(q.ticketNo);
+      var bands = q.bands.filter(function (b) { return ticketMatch || b.bandNo.toUpperCase().indexOf(search) !== -1; });
+      if (!bands.length) return;
+      var r = row('受付 ' + q.ticketNo, (q.customerName || '') + ' ／ 退場予定 ' + q.exitScheduledLabel);
+      button(r.actions,'未退場の全員（'+q.bands.length+'人）を退場','exitTicketAndFinalize',[q.ticketNo,staffId],'group-exit:'+q.ticketNo);
+      bands.forEach(function (b) {
+        var timing=document.createElement('div');timing.innerHTML=timeMeterHtml(b);r.actions.appendChild(timing);
+        button(r.actions,b.bandNo + (b.overtimeCharge>0?' ¥'+b.overtimeCharge.toLocaleString()+' 徴収・退場':' 退場'),'exitWristbandAndFinalize',[b.bandNo,'',staffId],'exit:' + b.bandNo);
+        if(b.overtimeCharge>0){r.actions.lastElementChild.classList.remove('btn-outline');r.actions.lastElementChild.classList.add('btn-danger');}
+      });
+      box.appendChild(r.element);
+    });
+    if (!box.children.length) box.textContent = search ? '該当する在場者がいません。' : '在場中のお客様はいません。';
+    var aid = document.getElementById('deskAid'); aid.replaceChildren();
+    document.getElementById('deskAidCount').textContent = '空き' + snapshot.aid.available + '／全' + snapshot.aid.total + '台';
+    snapshot.aid.active.forEach(function (a) {
+      var r = row('補助具 ' + (a.aidNo || '未割当') + ' ／受付 ' + a.ticketNo, a.startTimeLabel + '開始・' + a.elapsedMin + '分');
+      button(r.actions,'返却','returnAidRentalForGuest',[a.logId],'return:' + a.logId); aid.appendChild(r.element);
+    });
+    if (!aid.children.length) aid.textContent = '貸出中の補助具はありません。';
+  }
+  function refresh() {
+    var version = ++generation;
+    staffRun().withSuccessHandler(function (data) { if (version !== generation) return; snapshot = data; render(); })
+      .withFailureHandler(function () { if (version === generation) notice.textContent = '一覧を更新できません。フォームの入力は保持しています。'; }).getReceptionDesk();
+  }
+  function view(ticketNo) {
+    if (receptionSubmitting) return;
+    if (document.getElementById('formCard').style.display !== 'none' && !window.confirm('入力内容を確認して、別の受付を読み込みます。よろしいですか？')) return;
+    document.getElementById('searchTicketNo').value = ticketNo; document.getElementById('searchBtn').click();
+    document.getElementById('deskReception').scrollIntoView({ block:'start', behavior:'smooth' });
+  }
+  function operate(action, args, key) {
+    if (action === 'VIEW') { view(args[0]); return; }
+    if(action==='exitTicketAndFinalize'){confirmExitPayment('受付 '+args[0]+' 全員',function(result){notice.textContent='全員退場：徴収確認額 ¥'+result.charge.toLocaleString();},function(e){notice.textContent=e.message||e;},args[0]);return;}
+    if(action==='exitWristbandAndFinalize'){confirmExitPayment(args[0],function(result){notice.textContent='退場確定：徴収確認額 ¥'+result.charge.toLocaleString();refresh();refreshOperationBar();},function(e){notice.textContent=e.message||e;});return;}
+    if (pending[key]) return;
+    if (failed[key]) { check(action,args,key,true); return; }
+    if (!window.confirm('対象を確認して操作を確定します。よろしいですか？')) return;
+    var operation = makeStaffOperation_(); pending[key] = operation; generation++; render();
+    execute(action,args,key,operation);
+  }
+  function execute(action,args,key,operation) {
+    var runner = staffRun(operation).withSuccessHandler(function (result) {
+      delete pending[key]; delete failed[key];
+      notice.textContent = '保存しました。' + (result && result.aidNo ? '貸し出す補助具番号：' + result.aidNo : '') +
+        (typeof result === 'number' ? ' 追加料金 ¥' + result.toLocaleString() : '') +
+        (result && typeof result.charge === 'number' ? ' 追加料金 ¥' + result.charge.toLocaleString() : '');
+      refresh(); refreshOperationBar();
+    }).withFailureHandler(function (error) {
+      failed[key] = operation; delete pending[key];
+      notice.textContent = (error.message || error) + ' 保存状態を確認するまで再操作しません。';
+      render(); check(action,args,key);
+    });
+    runner[action].apply(null,args);
+  }
+  function check(action,args,key,retry) {
+    var operation = failed[key]; if (!operation) return;
+    staffRun().withSuccessHandler(function (s) {
+      if (s.state === 'DONE') { delete failed[key]; notice.textContent = '保存済みを確認しました。'; refresh(); refreshOperationBar(); }
+      else if (s.state === 'REJECTED') { delete failed[key]; notice.textContent = s.message + ' 最新一覧を確認してください。'; refresh(); }
+      else if (s.state === 'NOT_FOUND') {
+        notice.textContent = 'まだ保存記録がありません。次の操作で同じ操作番号を再送します。';
+        if (retry && window.confirm('保存記録がありません。同じ操作番号で再送しますか？')) {
+          pending[key] = operation; execute(action,args,key,operation);
+        }
+      } else { notice.textContent = (s.ticketNo ? '受付 ' + s.ticketNo + '：' : '') + '保存成否が不明／途中保存です。既存番号を確認してください。'; refresh(); }
+    }).withFailureHandler(function () { notice.textContent = '保存状態を取得できません。接続回復後、同じ操作で保存状態を確認してください。'; }).getStaffMutationStatus(operation.requestId);
+  }
+  document.getElementById('deskExitSearch').addEventListener('input', render);
+  document.getElementById('deskLoan').addEventListener('click', function () {
+    var ticket = document.getElementById('deskLoanTicket').value.trim();
+    if (/^\d+$/.test(ticket)) ticket = String(Number(ticket)).padStart(3,'0');
+    if (!ticket) { notice.textContent = '受付番号を入力してください。'; return; }
+    operate('addAidRentalForGuest',[ticket,'',staffId],'loan:' + ticket);
+  });
+  document.getElementById('deskFind').addEventListener('click', function () {
+    if (receptionSubmitting || (receptionOperation && document.getElementById('receptionRecovery').style.display !== 'none')) { notice.textContent='先に受付の保存状態を確認してください。'; return; }
+    if (document.getElementById('formCard').style.display !== 'none' && !window.confirm('入力内容を確認して番号検索へ戻ります。よろしいですか？')) return;
+    resetForm(); showCard('searchCard'); document.getElementById('searchTicketNo').focus();
+  });
+  document.getElementById('deskNew').addEventListener('click', function () { startWalkInReception_(); });
+  document.getElementById('deskPass').addEventListener('click', function () { if (!startWalkInReception_()) return; document.getElementById('passSearchInput').focus(); document.getElementById('passSearchInput').scrollIntoView({ block:'center' }); });
+  window.addEventListener('staff-operation-complete', function () { generation++; refresh(); refreshOperationBar(); loadReceptionAidStock(); loadDashboard(); });
+  refresh(); setInterval(function () { if (!document.hidden) refresh(); },30000);
+})();
+</script>
+
+<style>
+.ops-flow,.ops-facts,.ops-live-card,.ops-health,.ops-tips{background:#fff;border:1px solid #dfe8ef;border-radius:13px;padding:20px;box-shadow:0 5px 18px #17364f09}
+.ops-flow{margin:0 0 18px}.ops-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px}.ops-heading h2{font-size:16px;margin:0;color:#20384e}.ops-heading p{margin:4px 0 0;font-size:12px;color:#61778b}.ops-heading small{font-size:12px;color:#61778b}
+.ops-flow-steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.ops-flow-step,.ops-fact,.ops-tile{display:flex;text-align:left;gap:12px;align-items:center;padding:12px;min-width:0;color:#243b50;text-decoration:none}.ops-flow-step{border-right:1px solid #e3ebf2;border-radius:8px}.ops-flow-step:last-child{border:0}.ops-icon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:10px;background:var(--ops-pale,#e8f3fc);color:var(--ops-color,#2587cb)}.ops-icon svg{display:block}.ops-flow-step strong,.ops-flow-step small,.ops-flow-step span:last-child{display:block}.ops-flow-step strong{font-size:13px}.ops-flow-step small{font-size:11px;color:#61778b}.ops-flow-step em{font-style:normal;font-size:11px;color:#61778b}
+.ops-facts{margin:18px 0}.ops-fact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ops-fact{background:#fbfdfe;border:1px solid #e3eaf0;border-radius:10px;min-height:92px;width:100%;font:inherit;cursor:pointer}.ops-fact div{min-width:0}.ops-fact small,.ops-fact strong,.ops-fact p{display:block;margin:0;overflow-wrap:anywhere}.ops-fact small{font-size:12px;color:#61778b}.ops-fact strong{font-size:15px;margin:4px 0}.ops-fact p{font-size:12px;color:#61778b;line-height:1.6}
+.ops-lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.65fr);gap:20px;margin:22px 0}.ops-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ops-tile{display:block;background:#fff;border:1px solid #dfe8ef;border-radius:12px;padding:18px;box-shadow:0 5px 18px #17364f09}.ops-tile .ops-icon{margin-bottom:12px}.ops-tile small,.ops-tile strong,.ops-tile p{display:block;margin:0}.ops-tile small{font-size:13px;color:#53687a}.ops-tile strong{font-size:18px;margin:9px 0 5px}.ops-tile p{font-size:12px;color:#61778b}.ops-tile footer{font-size:12px;border-top:1px solid #edf2f5;margin-top:15px;padding-top:10px;color:var(--ops-color,#2587cb)}
+.ops-purple{--ops-color:#7167bd;--ops-pale:#efedfb}.ops-blue{--ops-color:#2587cb;--ops-pale:#e8f3fc}.ops-violet{--ops-color:#756bc4;--ops-pale:#efedfb}.ops-orange{--ops-color:#d27a26;--ops-pale:#fff2e4}.ops-green{--ops-color:#29936a;--ops-pale:#e7f7ef}.ops-cyan{--ops-color:#159bb6;--ops-pale:#e4f6f8}
+.ops-ring{--ops-percent:0%;width:156px;height:156px;border-radius:50%;margin:12px auto 20px;background:conic-gradient(#159dc5 0 var(--ops-percent),#e8f0f5 var(--ops-percent) 100%);display:grid;place-items:center}.ops-ring-inner{width:132px;height:132px;background:#fff;border-radius:50%;display:flex;flex-direction:column;justify-content:center;align-items:center}.ops-ring strong{font:800 28px Manrope,sans-serif;color:#16324a}.ops-ring small{font-size:12px;color:#61778b}.ops-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;border-bottom:1px solid #e8eef3;padding-bottom:18px}.ops-legend small{display:block;color:#61778b;font-size:12px}.ops-legend strong{font-size:14px;color:#334a5f}.ops-live-line{display:flex;align-items:center;gap:10px;padding:16px 0;border-bottom:1px solid #edf2f5;font-size:13px;color:#31475b}.ops-live-line:last-child{border:0;padding-bottom:0}.ops-tips{margin-top:14px;background:linear-gradient(120deg,#eef9fd,#f7fcfe);border-color:#cde8f3;font-size:13px;color:#476d83}.ops-tips h3,.ops-health h3{font-size:14px;margin:0 0 10px}.ops-tips p{margin:0 0 7px}.ops-health{margin-top:14px}.ops-health p{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#61778b;border-top:1px solid #edf2f5;padding-top:10px}.ops-health strong{font-weight:500;color:#247a61;text-align:right}.ops-live-tag{background:#e7f7f0;color:#168359;border-radius:99px;padding:4px 8px;font-size:11px}.ops-error{color:#a32f3a;font-size:13px}.ops-glove-dialog{width:min(600px,calc(100% - 24px));max-height:90vh;border:1px solid #dfe8ef;border-radius:14px;padding:24px;overflow:auto;color:#13243a}.ops-glove-dialog::backdrop{background:#071a2f77}.ops-glove-dialog label{display:block;margin:15px 0 6px;font-size:14px}.ops-glove-dialog input,.ops-glove-dialog select{width:100%;min-height:46px;padding:10px;border:1px solid #cfdae5;border-radius:8px;font:inherit}.ops-glove-dialog button{margin-top:14px}.ops-stock-values{display:flex;gap:12px;background:#eff8fc;border-radius:9px;padding:14px;font-size:16px}.ops-history{font-size:12px;color:#53687a;margin-top:20px}.ops-history p{border-top:1px solid #e5edf3;padding-top:10px}.ops-stock-notice{font-size:13px;color:#53687a;line-height:1.8}.ops-glove-dialog .ops-stock-controls{display:flex;gap:10px;flex-wrap:wrap}
+.ops-glove-dialog [hidden]{display:none!important}
+.ops-lower{align-items:start}
+.ops-support{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin:0 0 24px;align-items:start}
+.ops-support .ops-tips,.ops-support .ops-health{margin:0}
+.ops-support .ops-tips p{line-height:1.8}
+.ops-support .ops-health p:last-child{margin-bottom:0}
+.ops-error:empty{display:none}
+@media(min-width:1200px){.layout-refresh.layout-dashboard .desk-columns{grid-template-rows:min-content 1fr}}
+@media(max-width:700px){.ops-support{grid-template-columns:1fr;gap:14px}}
+@media(max-width:1100px){.ops-flow-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.ops-fact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-lower{grid-template-columns:1fr}}
+@media(max-width:600px){.ops-flow,.ops-facts,.ops-live-card,.ops-health,.ops-tips{padding:16px}.ops-flow-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-fact-grid,.ops-tiles{grid-template-columns:1fr}.ops-flow-step{border:0;padding:10px 4px;gap:7px}.ops-flow-step strong{font-size:12px}.ops-flow-step .ops-icon{width:30px;height:30px}.ops-heading{flex-wrap:wrap}}
+/* Arrow panels make the order from reception to checkout explicit. */
+.ops-tip-item{padding:12px 0;border-top:1px solid #d8eaf3}
+.ops-tip-item:last-child{padding-bottom:0}
+.ops-tip-tag{display:inline-block;margin-bottom:6px;font-size:10px;font-weight:700;color:#237c9f;background:#e0f2fa;border-radius:5px;padding:3px 7px}
+.ops-tip-source{display:block;font-size:11px;line-height:1.7;color:#6a8294}
+.ops-tip-link{display:inline-block;margin-top:5px;font-size:12px;color:#147fa9;text-decoration:underline}
+.ops-tips .ops-learning-status{font-size:11px;color:#6a8294;line-height:1.7;margin-bottom:12px}
+.ops-flow-steps{gap:6px}
+.ops-flow-step,.ops-flow-step:last-child{border:0;border-radius:0;min-height:100px;padding:16px 23px 16px 28px;gap:9px;background:#eaf5fc;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%,16px 50%);transition:background .15s}
+.ops-flow-step:first-child{padding-left:14px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%)}
+.ops-flow-step:nth-child(even){background:#e4f1fa}
+.ops-flow-step:hover,.ops-flow-step:focus-visible{background:#cde9f7;outline:0;box-shadow:inset 0 0 0 3px #168fbd}
+.ops-flow-step .ops-icon{width:32px;height:32px;background:#fff;color:#168fbd}
+.ops-flow-step>div{min-width:0;overflow-wrap:anywhere}
+.ops-flow-step small{word-break:keep-all;overflow-wrap:normal}
+.ops-flow-step em{color:#2788b2;font-weight:700}
+@media(max-width:600px){
+  .ops-flow-steps{grid-template-columns:1fr;gap:7px}
+  .ops-flow-step,.ops-flow-step:first-child,.ops-flow-step:last-child{min-height:100px;padding:16px 20px 28px;clip-path:polygon(0 0,100% 0,100% calc(100% - 15px),50% 100%,0 calc(100% - 15px));gap:14px}
+  .ops-flow-step strong{font-size:14px}
+}
+</style>
+<script>
+(function(){
+  var root=document.getElementById('dashboardOperations'),flow=document.getElementById('dashboardFlow'),facts=document.getElementById('dashboardFacts'),version=0,view=null,stockView=null,pending=null,key='',busy=false,dialog=null;
+  var icons=/* OPS_ICONS */ {"grid":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"2\" />\n        <rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"2\" />\n        <rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"2\" />\n        <rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"2\" /></svg>","ticket":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16v4a3 3 0 0 0 0 6v4H4v-4a3 3 0 0 0 0-6V5Z\" />\n        <path d=\"M13 8v1M13 12v1M13 16v1\" /></svg>","users":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" />\n        <circle cx=\"9\" cy=\"7\" r=\"4\" />\n        <path d=\"M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75\" /></svg>","exit":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\" />\n        <path d=\"m16 17 5-5-5-5M21 12H9\" /></svg>","pass":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"3\" />\n        <circle cx=\"8.5\" cy=\"11\" r=\"2\" />\n        <path d=\"M6 16c.7-1.3 1.5-2 2.5-2s1.8.7 2.5 2M14 9h4M14 13h4\" /></svg>","tool":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14.7 6.3a4 4 0 0 0-5-5l2.1 2.1-8.4 8.4a2 2 0 1 0 2.8 2.8l8.4-8.4 2.1 2.1a4 4 0 0 0-2-2Z\" />\n        <path d=\"m15 15 6 6M17 13l4 4\" /></svg>","report":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 2h9l5 5v15H6z\" />\n        <path d=\"M14 2v6h6M9 13h7M9 17h7\" /></svg>","settings":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\" />\n        <path d=\"M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.94 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.57 15 1.7 1.7 0 0 0 3 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.57 1.7 1.7 0 0 0 10 3V3h4v.08a1.7 1.7 0 0 0 1.06 1.52 1.7 1.7 0 0 0 1.88-.34L17 4.2 19.8 7l-.06.06A1.7 1.7 0 0 0 19.4 9c.23.61.83 1 1.52 1H21v4h-.08c-.69 0-1.29.4-1.52 1Z\" /></svg>","sun":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\" /><path d=\"M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41\" /></svg>","clock":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" /><path d=\"M12 7v5l3 2\" /></svg>","snow":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 2v20M4.2 6.5l15.6 11M4.2 17.5l15.6-11\" />\n        <path d=\"m9 4 3 3 3-3M9 20l3-3 3 3M4.5 10l4 .9-.8-4M19.5 14l-4-.9.8 4M4.5 14l4-.9-.8 4M19.5 10l-4 .9.8-4\" /></svg>","glove":"<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.5 11V4.5a1.5 1.5 0 0 1 3 0V9M10.5 9V3.5a1.5 1.5 0 0 1 3 0V9M13.5 9V4.5a1.5 1.5 0 0 1 3 0v6M16.5 10V7a1.5 1.5 0 0 1 3 0v7c0 5-3 8-7.5 8S5 19 5 15v-2.5a1.5 1.5 0 0 1 2.5-1.1Z\" /></svg>"};
+  function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+  function icon(name){var e=el('span','ops-icon');e.innerHTML=icons[name]||icons.report||'';return e;}
+  function link(page){return pageUrl(page);}
+  function load(){var gen=++version;staffRun().withSuccessHandler(function(r){if(gen!==version)return;view=r;render();}).withFailureHandler(function(){if(gen===version)document.getElementById('dashboardOperationsError').textContent='運営パネルを更新できません。表示情報は最新ではない可能性があります。';}).getDashboardOperations();}
+  function heading(parent,title,sub){var h=el('div','ops-heading'),group=el('div');group.appendChild(el('h2','',title));if(sub)group.appendChild(el('p','',sub));h.appendChild(group);parent.appendChild(h);return h;}
+  function render(){document.getElementById('dashboardOperationsError').textContent='';flow.replaceChildren();heading(flow,'本日の運営フロー','受付から退場までの進行状況');var steps=el('div','ops-flow-steps');view.flow.forEach(function(s,i){var a=el('a','ops-flow-step');a.href=link(s.page);a.appendChild(icon(['ticket','report','users','snow','clock','exit'][i]));var d=el('div');d.appendChild(el('em','',String(i+1).padStart(2,'0')));d.appendChild(el('strong','',s.label));d.appendChild(el('small','',s.value));a.appendChild(d);steps.appendChild(a);});flow.appendChild(steps);
+    facts.replaceChildren();var fh=heading(facts,'本日の運営情報','営業判断と現場対応に必要な情報');fh.appendChild(el('small','','更新 '+view.updatedLabel));var grid=el('div','ops-fact-grid');view.facts.forEach(function(f){var a=el(f.action?'button':'a','ops-fact ops-'+f.tone);if(f.action){a.type='button';a.addEventListener('click',openStock);}else a.href=link(f.page);a.appendChild(icon(f.icon));var d=el('div');d.appendChild(el('small','',f.label));d.appendChild(el('strong','',f.value));d.appendChild(el('p','',f.note));a.appendChild(d);grid.appendChild(a);});facts.appendChild(grid);
+    root.replaceChildren();var support=document.getElementById('dashboardSupport');support.replaceChildren();var left=el('section');heading(left,'現場オペレーション','次に対応が必要な業務を確認できます');var tiles=el('div','ops-tiles');view.operations.forEach(function(o){var a=el('a','ops-tile ops-'+o.tone);a.href=link(o.page);a.appendChild(icon(o.icon));a.appendChild(el('small','',o.label));a.appendChild(el('strong','',o.value));a.appendChild(el('p','',o.note));a.appendChild(el('footer','','管理画面へ →'));tiles.appendChild(a);});left.appendChild(tiles);root.appendChild(left);
+    var right=el('aside'),h=heading(right,'運営状況','リアルタイム');h.appendChild(el('span','ops-live-tag','LIVE'));var card=el('section','ops-live-card'),ring=el('div','ops-ring'),inner=el('div','ops-ring-inner');ring.style.setProperty('--ops-percent',Math.min(100,view.occupancy.percent||0)+'%');ring.setAttribute('aria-label','収容率 '+(view.occupancy.percent===null?'定員未設定':view.occupancy.percent+'%'));inner.appendChild(el('strong','',view.occupancy.percent===null?'—':view.occupancy.percent+'%'));inner.appendChild(el('small','','収容率'));ring.appendChild(inner);card.appendChild(ring);var legend=el('div','ops-legend');[['滑走中',view.occupancy.count+'名'],['待機中',view.occupancy.waitingPeople+'名'],['空き',view.occupancy.available===null?'定員未設定':view.occupancy.available+'名']].forEach(function(pair){var d=el('div');d.appendChild(el('small','',pair[0]));d.appendChild(el('strong','',pair[1]));legend.appendChild(d);});card.appendChild(legend);var condition=el('a','ops-live-line');condition.href=link('dailyreport')+'#rinkConditionForm';condition.title='整氷・リンクコンディションを記録／確認';condition.appendChild(icon('snow'));condition.appendChild(el('span','','リンクコンディション：'+view.rinkCondition));card.appendChild(condition);var aid=el('a','ops-live-line');aid.href=link('aidinventory');aid.appendChild(icon('tool'));aid.appendChild(el('span','','滑走補助具：'+view.aid.available+'台 利用可能 →'));card.appendChild(aid);right.appendChild(card);root.appendChild(right);var tips=el('section','ops-tips');tips.appendChild(el('h3','','運営のヒント'));tips.appendChild(el('p','ops-learning-status',view.learningStatus||''));(view.tipDetails||view.tips.map(function(t){return {text:t};})).forEach(function(t){var item=el('div','ops-tip-item');item.appendChild(el('span','ops-tip-tag',t.kind==='history'?'過去の記録から':'本日の注意'));item.appendChild(el('p','',t.text));if(t.source)item.appendChild(el('small','ops-tip-source',t.source));if(t.page){var a=el('a','ops-tip-link','元の記録を確認 →');a.href=link(t.page);item.appendChild(a);}tips.appendChild(item);});support.appendChild(tips);var health=el('section','ops-health');health.appendChild(el('h3','','システム連携'));view.integrations.forEach(function(i){var p=el('p');p.appendChild(el('span','',i.label));p.appendChild(el('strong','',i.value));health.appendChild(p);});support.appendChild(health);
+  }
+  function savePending(){try{if(pending)sessionStorage.setItem(key,JSON.stringify(pending));else sessionStorage.removeItem(key);}catch(e){}}
+  function openStock(){if(dialog){dialog.showModal();return;}dialog=el('dialog','ops-glove-dialog');dialog.innerHTML='<h2>手袋の在庫管理</h2><div id="gloveValues" class="ops-stock-values"></div><p id="gloveNotice" class="ops-stock-notice"></p><label for="gloveSize">サイズ</label><select id="gloveSize"><option>S</option><option>L</option></select><label for="gloveKind">操作</label><select id="gloveKind"><option value="COUNT">実数を設定・棚卸（初回もこちら）</option><option value="RECEIVE">入荷（入力数を追加）</option></select><label for="gloveQuantity">数量（枚）</label><input id="gloveQuantity" type="number" min="0" max="1000000" inputmode="numeric"><label for="gloveNote">理由・メモ</label><input id="gloveNote" maxlength="200" placeholder="初回棚卸、入荷、破損など"><p id="gloveMessage" class="ops-stock-notice" role="status" aria-live="polite"></p><div class="ops-stock-controls"><button class="btn" type="button" id="gloveSave">在庫を保存</button><button class="btn btn-outline" type="button" id="gloveRefresh">最新の在庫を確認</button><button class="btn btn-outline" type="button" id="gloveCheck">保存状態を確認</button><button class="btn btn-outline" type="button" id="gloveRetry" hidden>同じ内容で再送信</button><button class="btn btn-outline" type="button" id="gloveClose">閉じる</button></div><div id="gloveHistory" class="ops-history"></div>';document.body.appendChild(dialog);var $=function(id){return document.getElementById(id);};
+    function message(t){$('gloveMessage').textContent=t;}
+    function lock(){['gloveSize','gloveKind','gloveQuantity','gloveNote','gloveSave'].forEach(function(id){$(id).disabled=busy||!!pending;});$('gloveClose').disabled=busy;$('gloveCheck').disabled=busy;$('gloveRefresh').disabled=busy;$('gloveRetry').disabled=busy;}
+    function draw(r){stockView=r;key='icepark.gloves.pending.'+staffId+'.'+(r.testMode?'test':'live');if(!pending){try{var saved=JSON.parse(sessionStorage.getItem(key)||'null');if(saved&&saved.meta&&saved.input)pending=saved;}catch(e){}}$('gloveValues').textContent=r.items.map(function(i){return i.size+'：'+(i.configured?i.count+'枚':'未設定');}).join(' ／ ');$('gloveNotice').textContent=r.notice;$('gloveHistory').replaceChildren();r.history.forEach(function(h){$('gloveHistory').appendChild(el('p','',h.at+' ／ '+h.size+' '+(h.delta>0?'+':'')+h.delta+'枚 ／ '+h.note));});lock();}
+    function refresh(){if(busy)return;busy=true;lock();staffRun().withSuccessHandler(function(r){busy=false;draw(r);if(pending)check();}).withFailureHandler(function(e){busy=false;lock();message(e.message||e);}).getGloveInventoryView();}
+    function done(result){pending=null;savePending();$('gloveRetry').hidden=true;busy=false;message('手袋'+result.size+'の在庫を'+result.after+'枚に保存しました。');lock();refresh();load();}
+    function check(){if(busy||!pending)return;busy=true;lock();staffRun().withSuccessHandler(function(s){busy=false;if(s.state==='DONE'){done(s.result);return;}if(s.state==='REJECTED'){pending=null;savePending();message(s.message+' 最新の在庫を確認してください。');$('gloveRetry').hidden=true;}else if(s.state==='NOT_FOUND'){message('保存記録はありません。同じ内容で再送信できます。');$('gloveRetry').hidden=false;}else{message('途中保存の可能性があります。再操作せず、在庫履歴と管理者に確認してください。');$('gloveRetry').hidden=true;}lock();}).withFailureHandler(function(e){busy=false;lock();message('保存状態を取得できません。接続回復後に確認してください。');}).getStaffMutationStatus(pending.meta.requestId);}
+    function send(){if(busy||!pending)return;busy=true;lock();$('gloveRetry').hidden=true;staffRun(pending.meta).withSuccessHandler(done).withFailureHandler(function(e){busy=false;lock();message(e.message||e);check();}).adjustGloveInventory(pending.input);}
+    $('gloveSave').onclick=function(){if(busy||pending||!stockView)return;var qty=Number($('gloveQuantity').value),note=$('gloveNote').value.trim();if(!$('gloveQuantity').value||!Number.isInteger(qty)||qty<0||qty>1000000||!note){message('数量を整数で入力し、理由も記入してください。');return;}if(!window.confirm('手袋'+$('gloveSize').value+'の'+($('gloveKind').value==='COUNT'?'現在庫を'+qty+'枚に設定':'在庫に'+qty+'枚追加')+'しますか？'))return;pending={input:{size:$('gloveSize').value,kind:$('gloveKind').value,quantity:qty,note:note,expectedVersion:stockView.version},meta:makeStaffOperation_()};savePending();send();};
+    $('gloveRefresh').onclick=refresh;$('gloveCheck').onclick=check;$('gloveRetry').onclick=send;$('gloveClose').onclick=function(){if(!busy)dialog.close();};dialog.addEventListener('cancel',function(e){if(busy)e.preventDefault();});dialog.showModal();refresh();
+  }
+  window.addEventListener('staff-operation-complete',load);setInterval(function(){if(!document.hidden)load();},30000);load();
+})();
+</script>
+
+</body>
+</html>

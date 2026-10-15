@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+</head>
+<body data-layout-page="Incident" class="layout-refresh">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">事故記録</h1>
+          <div class="page-header-sub">怪我・事故の記録と対応状況の管理を行います</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+
+      <div id="deniedBox" class="card" style="display:none;">
+        <p>担当者を確認できません。再度ログインしてください。</p>
+      </div>
+
+      <div id="mainArea" style="display:none;">
+      <div class="card">
+        <div class="section-title">新規記録</div>
+        <div class="field">
+          <label>発生日時</label>
+          <input type="datetime-local" id="occurredAt">
+        </div>
+        <div class="field">
+          <label>受付番号（分かれば）</label>
+          <input type="text" id="ticketNo" placeholder="例：001">
+        </div>
+        <div class="field">
+          <label>リストバンド番号（分かれば）</label>
+          <input type="text" id="bandNo">
+        </div>
+        <div class="field">
+          <label>負傷者氏名</label>
+          <input type="text" id="victimName">
+        </div>
+        <div class="field">
+          <label>年齢（分かれば）</label>
+          <input type="number" id="victimAge" min="0">
+        </div>
+        <div class="field">
+          <label>負傷部位</label>
+          <input type="text" id="injuryPart" placeholder="例：右膝">
+        </div>
+        <div class="field">
+          <label>症状</label>
+          <textarea id="symptom" rows="2" placeholder="例：転倒し右膝を強打。軽い腫れあり"></textarea>
+        </div>
+        <div class="field">
+          <label>対応内容</label>
+          <select id="response">
+            <option value="FIRST_AID">応急手当のみ</option>
+            <option value="OBSERVATION">経過観察</option>
+            <option value="HOSPITAL_REFERRAL">病院受診を案内</option>
+            <option value="AMBULANCE">救急要請</option>
+            <option value="OTHER">その他</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>対応内容の補足</label>
+          <textarea id="responseNote" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label>立会いスタッフ</label>
+          <select id="witnessStaffId"></select>
+        </div>
+        <div class="field">
+          <label>保護者・緊急連絡先（分かれば）</label>
+          <input type="text" id="guardianContact" placeholder="例：母 090-xxxx-xxxx">
+        </div>
+        <button class="btn" id="submitBtn" style="width:100%;">記録する</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <span>記録一覧</span>
+          <span class="tag" id="totalTag">0件</span>
+        </div>
+        <div id="list"></div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    var RESPONSE_LABEL = {
+      FIRST_AID: '応急手当のみ', OBSERVATION: '経過観察', HOSPITAL_REFERRAL: '病院受診案内',
+      AMBULANCE: '救急要請', OTHER: 'その他',
+    };
+    var STATUS_LABEL = { OPEN: { text: '対応中', cls: 'badge-warn' }, CLOSED: { text: '対応完了', cls: 'badge-ok' } };
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() { document.getElementById('errorBox').style.display = 'none'; }
+
+    function nowLocalValue() {
+      var d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    }
+    document.getElementById('occurredAt').value = nowLocalValue();
+
+    function loadWitnessOptions() {
+      staffRun()
+        .withSuccessHandler(function (list) {
+          var sel = document.getElementById('witnessStaffId');
+          sel.innerHTML = '';
+          list.forEach(function (s) {
+            var opt = document.createElement('option');
+            opt.value = s.staffId; opt.textContent = s.staffName;
+            if (s.staffId === staffId) opt.selected = true;
+            sel.appendChild(opt);
+          });
+        })
+        .getStaffListPublic();
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', function () {
+      clearError();
+      var victimName = document.getElementById('victimName').value.trim();
+      var injuryPart = document.getElementById('injuryPart').value.trim();
+      var symptom = document.getElementById('symptom').value.trim();
+      if (!victimName) { showError('負傷者氏名を入力してください'); return; }
+      if (!injuryPart) { showError('負傷部位を入力してください'); return; }
+      if (!symptom) { showError('症状を入力してください'); return; }
+      if (!window.confirm('この内容で記録します。よろしいですか？')) return;
+
+      var input = {
+        occurredAt: document.getElementById('occurredAt').value,
+        ticketNo: document.getElementById('ticketNo').value.trim(),
+        bandNo: document.getElementById('bandNo').value.trim(),
+        victimName: victimName,
+        victimAge: document.getElementById('victimAge').value,
+        injuryPart: injuryPart,
+        symptom: symptom,
+        response: document.getElementById('response').value,
+        responseNote: document.getElementById('responseNote').value.trim(),
+        witnessStaffId: document.getElementById('witnessStaffId').value,
+        guardianContact: document.getElementById('guardianContact').value.trim(),
+      };
+      staffRun()
+        .withSuccessHandler(function (id) {
+          window.alert('記録しました（' + id + '）。');
+          document.getElementById('victimName').value = '';
+          document.getElementById('victimAge').value = '';
+          document.getElementById('injuryPart').value = '';
+          document.getElementById('symptom').value = '';
+          document.getElementById('responseNote').value = '';
+          document.getElementById('ticketNo').value = '';
+          document.getElementById('bandNo').value = '';
+          document.getElementById('guardianContact').value = '';
+          loadList();
+        })
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .recordIncident(input, staffId);
+    });
+
+    function render(list) {
+      document.getElementById('totalTag').textContent = list.length + '件';
+      var box = document.getElementById('list');
+      if (list.length === 0) {
+        box.innerHTML = '<div class="empty-hint">記録はありません</div>';
+        return;
+      }
+      box.innerHTML = '';
+      list.forEach(function (i) {
+        var st = STATUS_LABEL[i.followUpStatus] || STATUS_LABEL.OPEN;
+        var row = document.createElement('div');
+        row.className = 'list-row';
+        row.innerHTML =
+          '<div class="list-row-top"><div class="list-row-ticket">' + i.victimName + '（' + (i.victimAge || '年齢不明') + '）</div>' +
+          '<span class="badge ' + st.cls + '">' + st.text + '</span></div>' +
+          '<div class="list-row-sub">' + i.occurredAtLabel + '　部位：' + i.injuryPart + '</div>' +
+          '<div class="list-row-sub">症状：' + i.symptom + '</div>' +
+          '<div class="list-row-sub">対応：' + (RESPONSE_LABEL[i.response] || i.response) + (i.responseNote ? '（' + i.responseNote + '）' : '') + '</div>' +
+          '<div class="list-row-sub">立会い：' + i.witnessStaffName + (i.guardianContact ? '　連絡先：' + i.guardianContact : '') + '</div>' +
+          (i.followUpStatus === 'OPEN'
+            ? '<div class="list-row-actions"><button class="btn-sm close-btn" data-id="' + i.incidentId + '">対応完了にする</button></div>'
+            : '');
+        box.appendChild(row);
+      });
+      document.querySelectorAll('.close-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          if (!window.confirm('この記録を「対応完了」にします。よろしいですか？')) return;
+          clearError();
+          staffRun()
+            .withSuccessHandler(function () { loadList(); })
+            .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+            .closeIncident(id, staffId);
+        });
+      });
+    }
+
+    function loadList() {
+      clearError();
+      staffRun()
+        .withSuccessHandler(render)
+        .withFailureHandler(function (err) { showError('一覧の取得に失敗しました：' + (err && err.message ? err.message : err)); })
+        .getIncidentListView(staffId);
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+            document.getElementById('mainArea').style.display = 'block';
+            loadWitnessOptions();
+            loadList();
+          } else {
+            document.getElementById('deniedBox').style.display = 'block';
+          }
+        })
+        .getStaffById(staffId);
+    }
+
+    renderAdminSidebar('incident');
+    loadStaffLabel();
+  </script>
+</body>
+</html>

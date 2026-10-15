@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+  <style>
+  .list-row-top{flex-wrap:wrap}.all-exit-btn{white-space:normal}
+  .band-row{display:grid;grid-template-columns:minmax(140px,.7fr) minmax(220px,1fr) auto;align-items:center;gap:10px 20px;padding:10px 14px;margin-bottom:6px}
+  .band-id{font-weight:700;color:var(--brand-dark);overflow-wrap:anywhere}.band-row .time-meter{width:100%;margin:0}.band-row .exit-btn{justify-self:end;font-size:12px;padding:8px 12px;min-height:36px}
+  @media(max-width:1100px){.band-row{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px}.band-row .band-timing{grid-column:1 / -1;grid-row:2}.band-row .exit-btn{grid-column:2;grid-row:1}.band-row .time-meter{min-width:0}}
+  </style>
+</head>
+<body data-layout-page="OnSite" class="layout-refresh">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">在場中</h1>
+          <div class="page-header-sub">氷上にいるお客様の確認・退場処理・延長を行います</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div class="section-title" style="margin-bottom:0;">氷上にいるお客様</div>
+          <div class="loading" id="updatedAt"></div>
+        </div>
+        <div class="layout-kpis mt-16"><div class="stat-card"><div class="value" id="layoutOnSitePeople">-</div><div class="label">氷上人数</div></div><div class="stat-card"><div class="value" id="totalTag">-</div><div class="label">在場組数</div></div><div class="stat-card"><div class="value" id="layoutNearExitPeople">-</div><div class="label">直近の退場予定（最大10人）</div></div></div>
+      </div>
+
+      <div class="card"><div class="section-title">退場予定が近い10人</div><div id="nearExitList" style="white-space:pre-line;line-height:1.9;"></div><p class="loading">表示金額は今退場した場合の見込みです。最終料金は退場時に確定します。</p></div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() {
+      document.getElementById('errorBox').style.display = 'none';
+    }
+
+    function overBadge(overMinutes) {
+      if (overMinutes === null || overMinutes === undefined) return '';
+      if (overMinutes > 0) return '<span class="badge badge-warn">予定時刻を' + Math.floor(overMinutes) + '分超過</span>';
+      return '<span class="badge badge-ok">残り' + Math.ceil(Math.abs(overMinutes)) + '分</span>';
+    }
+    function bandTimeLabel(w) {
+      if(w.remainingMinutes==null)return '退場予定未設定';
+      var label=w.overMinutes>0?'超過 '+w.overMinutes+'分':'残り '+w.remainingMinutes+'分';
+      return label+' ／ 超過料金（見込み）¥'+w.overtimeCharge.toLocaleString()+(w.overMinutes>0&&w.overtimeCharge===0&&w.overtimeReason?'（'+w.overtimeReason+'）':'');
+    }
+
+    function memberLabel(type) {
+      return type === 'ADULT' ? '大人' : type === 'CHILD' ? '子供' : (type || '');
+    }
+
+    function render(list) {
+      var savedInputs={};document.querySelectorAll('.extend-min').forEach(function(e){savedInputs[e.dataset.ticket]=e.value;});
+      var upcoming=[];list.forEach(function(q){q.bands.forEach(function(w){if(w.exitScheduledAt)upcoming.push({ticket:q.ticketNo,band:w});});});
+      upcoming.sort(function(a,b){return new Date(a.band.exitScheduledAt)-new Date(b.band.exitScheduledAt);});
+      document.getElementById('nearExitList').textContent=upcoming.slice(0,10).map(function(p){return '受付 '+p.ticket+'／'+p.band.bandNo+'　'+p.band.exitScheduledLabel+'　'+bandTimeLabel(p.band);}).join('\n')||'退場予定のある在場者はいません。';
+      document.getElementById('totalTag').textContent = list.length + '組';
+      document.getElementById('layoutOnSitePeople').textContent = list.reduce(function(n,q){return n+q.bands.length;},0)+'名';
+      document.getElementById('layoutNearExitPeople').textContent = Math.min(10,upcoming.length)+'名';
+      var box = document.getElementById('list');
+      if (list.length === 0) {
+        box.innerHTML = '<div class="card"><div class="empty-hint">現在、氷上にいるお客様はいません</div></div>';
+        return;
+      }
+      box.innerHTML = '';
+      list.forEach(function (q) {
+        var card = document.createElement('div');
+        card.className = 'card';
+        var bandsHtml = q.bands.map(function (w) {
+          return '<div class="list-row band-row">' +
+              '<div class="band-id">' + w.bandNo + '（' + memberLabel(w.memberType) + '）</div>' +
+              '<div class="band-timing">'+timeMeterHtml(w)+'</div>'+
+              '<button class="btn '+(w.overtimeCharge>0?'btn-danger':'btn-outline')+' btn-sm exit-btn" data-band="' + w.bandNo + '">'+(w.overtimeCharge>0?'¥'+w.overtimeCharge.toLocaleString()+' 徴収・退場':'退場')+'</button>' +
+          '</div>';
+        }).join('');
+
+        card.innerHTML =
+          '<div class="list-row-top">' +
+            '<div class="list-row-ticket">' + q.ticketNo + '</div>' +
+            overBadge(q.overMinutes) +
+            '<button class="btn btn-sm all-exit-btn" data-ticket="'+q.ticketNo+'">未退場の全員（'+q.bands.length+'人）を退場</button>'+
+          '</div>' +
+          '<div class="list-row-sub">' +
+            (q.customerName ? q.customerName + '　' : '') + '在場' + q.bands.length + '名' +
+            (q.isNighter ? '　ナイター' : '') +
+          '</div>' +
+          '<div class="list-row-sub">入場：' + (q.enteredAtLabel || '-') +
+            '　退場予定：' + (q.exitScheduledLabel || '-') + '</div>' +
+          '<div class="mt-16">' + bandsHtml + '</div>' +
+          '<div class="list-row-actions">' +
+            '<input type="number" class="extend-min" data-ticket="' + q.ticketNo + '" placeholder="延長(分)" ' +
+              'min="0" style="max-width:110px;">' +
+            '<button class="btn btn-sm extend-btn" data-ticket="' + q.ticketNo + '">延長する</button>' +
+          '</div>';
+        box.appendChild(card);
+      });
+
+      document.querySelectorAll('.extend-min').forEach(function(e){if(savedInputs[e.dataset.ticket]!=null)e.value=savedInputs[e.dataset.ticket];});
+      document.querySelectorAll('.all-exit-btn').forEach(function(btn){btn.addEventListener('click',function(){var ticket=btn.dataset.ticket;confirmExitPayment('受付 '+ticket+' 全員',function(res){loadList();window.alert('受付 '+ticket+' 全員退場：徴収確認額 ¥'+res.charge.toLocaleString());},function(e){showError(e.message||e);},ticket);});});
+      document.querySelectorAll('.exit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { exitBand(btn.getAttribute('data-band')); });
+      });
+      document.querySelectorAll('.extend-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var ticketNo = btn.getAttribute('data-ticket');
+          var input = document.querySelector('.extend-min[data-ticket="' + ticketNo + '"]');
+          var minutes = Number(input.value) || 0;
+          if (minutes <= 0) { showError('延長する分数を入力してください'); return; }
+          extendTicket(ticketNo, minutes);
+        });
+      });
+    }
+
+    function exitBand(bandNo) {
+      clearError();
+      confirmExitPayment(bandNo,function(res){
+          loadList();
+          window.alert(bandNo+' 退場確定：'+(res.charge>0?'徴収確認済み ¥'+res.charge.toLocaleString():'追加料金なし'));
+      },function(err){showError(err.message||err);});
+    }
+
+    function extendTicket(ticketNo, minutes) {
+      clearError();
+      staffRun()
+        .withSuccessHandler(function () { loadList(); })
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .applyGroupExtension(ticketNo, minutes, staffId);
+    }
+
+    var onSiteVersion=0;
+    function loadList() {
+      var version=++onSiteVersion;
+      staffRun()
+        .withSuccessHandler(function (list) {
+          if(version!==onSiteVersion)return;
+          render(list);
+          document.getElementById('updatedAt').textContent = '更新：' + new Date().toLocaleTimeString('ja-JP');
+        })
+        .withFailureHandler(function (err) {
+          showError('一覧の取得に失敗しました：' + (err && err.message ? err.message : err));
+        })
+        .getOnSiteView();
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+          }
+        })
+        .getStaffById(staffId);
+    }
+
+    renderAdminSidebar('onsite');
+    loadStaffLabel();
+    loadList();
+    setInterval(loadList, 15000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <meta name="referrer" content="no-referrer">
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+</head>
+<body data-layout-page="GroupBooking" class="layout-refresh">
+  <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+  <div class="app-shell">
+    <div id="adminSidebar" class="sidebar"></div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-header-title">団体予約</h1>
+          <div class="page-header-sub">承認待ちの確認・当日チェックインを行います</div>
+        </div>
+        <div class="page-header-meta">
+          <span class="chip" id="staffLabel">読み込み中...</span>
+        </div>
+      </div>
+
+      <div id="errorBox" class="msg-error" style="display:none;"></div>
+
+      <div class="card" id="detailCard" style="display:none;">
+      <div class="list-row-top">
+        <div class="list-row-ticket" id="detailName">-</div>
+        <span class="tag" id="detailStatus"></span>
+      </div>
+      <div class="list-row-sub" id="detailWhen"></div>
+      <div class="list-row-sub" id="detailContact"></div>
+      <div class="list-row-sub" id="detailCount"></div>
+      <div class="list-row-sub" id="detailAvailable"></div>
+      <div class="list-row-sub" id="detailPayment"></div>
+      <div class="list-row-sub" id="detailNote"></div>
+
+      <div id="pendingActions" style="display:none;" class="mt-16">
+        <button class="btn" id="approveBtn" style="width:100%;">承認する</button>
+        <div class="field mt-16">
+          <label>却下理由</label>
+          <input type="text" id="rejectReason" placeholder="例：当該時間帯は満枠のため">
+        </div>
+        <button class="btn btn-outline" id="rejectBtn" style="width:100%;">却下する</button>
+      </div>
+
+      <div id="checkinActions" style="display:none;" class="mt-16">
+        <div class="field">
+          <label>当日確定人数（大人）</label>
+          <div class="stepper">
+            <button type="button" class="stepper-btn" data-target="checkinAdults" data-delta="-1">−</button>
+            <input type="number" id="checkinAdults" class="stepper-input" min="0" value="0" inputmode="numeric">
+            <button type="button" class="stepper-btn" data-target="checkinAdults" data-delta="1">＋</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>当日確定人数（子供）</label>
+          <div class="stepper">
+            <button type="button" class="stepper-btn" data-target="checkinChildren" data-delta="-1">−</button>
+            <input type="number" id="checkinChildren" class="stepper-input" min="0" value="0" inputmode="numeric">
+            <button type="button" class="stepper-btn" data-target="checkinChildren" data-delta="1">＋</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>お支払い方法</label>
+          <select id="checkinPaymentMethod">
+            <option value="CASH">現金</option>
+            <option value="PAYPAY">PayPay</option>
+          </select>
+        </div>
+        <div class="card" style="background:#f4f7fa; margin:12px 0;">
+          <div class="label">料金の目安</div>
+          <div class="value" style="font-size:22px; font-weight:bold; color:var(--brand-dark);" id="checkinFeePreview">-</div>
+        </div>
+        <button class="btn" id="checkinBtn" style="width:100%;">当日受付（チェックイン）する</button>
+      </div>
+
+      <div id="checkedInNote" style="display:none;" class="mt-16 loading">チェックイン済みです。</div>
+    </div>
+
+      <div class="card">
+        <div class="section-title">
+          <span>本日以降の団体予約</span>
+          <span class="tag" id="totalTag">0件</span>
+        </div>
+        <div id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var staffId = window.staffPortal.staffId;
+    var sessionToken = window.staffPortal.sessionToken;
+    var baseUrl = window.staffPortal.baseUrl;
+
+    var STATUS_LABEL = {
+      PENDING: { text: '承認待ち', cls: 'badge-warn' },
+      RESERVED: { text: '予約確定', cls: 'badge-ok' },
+      CHECKED_IN: { text: 'チェックイン済', cls: 'badge-ok' },
+      CANCELLED: { text: '却下・取消', cls: 'badge-warn' },
+    };
+    var PAYMENT_LABEL = { UNPAID: '未払い', PAID: '支払済' };
+    var PAYMENT_LABEL_METHOD = { CASH: '現金', PAYPAY: 'PayPay' };
+
+    function badgeHtml(status) {
+      var c = STATUS_LABEL[status] || { text: status, cls: 'badge-warn' };
+      return '<span class="badge ' + c.cls + '">' + c.text + '</span>';
+    }
+
+    function showError(msg) {
+      var box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() { document.getElementById('errorBox').style.display = 'none'; }
+
+    document.querySelectorAll('.stepper-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.getAttribute('data-target'));
+        var delta = Number(btn.getAttribute('data-delta'));
+        var current = Number(input.value) || 0;
+        input.value = Math.max(0, current + delta);
+        runCheckinFeePreview();
+      });
+    });
+
+    // チェックイン確定人数の変更に応じて、料金の目安をその場で再計算する
+    function runCheckinFeePreview() {
+      if (!currentGroupId) return;
+      var adults = Number(document.getElementById('checkinAdults').value) || 0;
+      var children = Number(document.getElementById('checkinChildren').value) || 0;
+      var box = document.getElementById('checkinFeePreview');
+      if (adults + children <= 0) { box.textContent = '-'; return; }
+      staffRun()
+        .withSuccessHandler(function (fee) { box.textContent = '¥' + fee.total.toLocaleString(); })
+        .withFailureHandler(function () { box.textContent = '-'; })
+        .previewGroupBookingFeeApi(currentGroupId, adults, children);
+    }
+    ['checkinAdults', 'checkinChildren'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', runCheckinFeePreview);
+      document.getElementById(id).addEventListener('change', runCheckinFeePreview);
+    });
+
+    var currentGroupId = '';
+
+    function showDetail(d) {
+      currentGroupId = d.groupId;
+      document.getElementById('detailCard').style.display = 'block';
+      document.getElementById('detailName').textContent = d.groupName;
+      document.getElementById('detailStatus').innerHTML = badgeHtml(d.status);
+      document.getElementById('detailWhen').textContent =
+        d.bookingDateLabel + '　' + d.startTime + '〜' + d.endTime;
+      document.getElementById('detailContact').textContent =
+        '代表者：' + d.contactName + '（' + d.contactPhone + '）';
+      document.getElementById('detailCount').textContent =
+        '人数：大人' + d.adultCount + '名／子供' + d.childCount + '名';
+      document.getElementById('detailAvailable').textContent =
+        (d.availableCapacity != null) ? ('参考：申込時点の空き枠 ' + d.availableCapacity + '名') : '';
+      document.getElementById('detailPayment').textContent =
+        '支払状況：' + (PAYMENT_LABEL[d.paymentStatus] || d.paymentStatus || '-');
+      document.getElementById('detailNote').textContent = d.note ? ('備考：' + d.note) : '';
+
+      document.getElementById('pendingActions').style.display = (d.status === 'PENDING') ? 'block' : 'none';
+      document.getElementById('checkinActions').style.display = (d.status === 'RESERVED') ? 'block' : 'none';
+      document.getElementById('checkedInNote').style.display = (d.status === 'CHECKED_IN') ? 'block' : 'none';
+      document.getElementById('rejectReason').value = '';
+      document.getElementById('checkinAdults').value = d.adultCount;
+      document.getElementById('checkinChildren').value = d.childCount;
+      document.getElementById('checkinPaymentMethod').value = 'CASH';
+      document.getElementById('checkinFeePreview').textContent = '-';
+      if (d.status === 'RESERVED') runCheckinFeePreview();
+    }
+
+    function loadDetail(groupId) {
+      clearError();
+      staffRun()
+        .withSuccessHandler(showDetail)
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .getGroupBookingDetail(groupId);
+    }
+
+    document.getElementById('approveBtn').addEventListener('click', function () {
+      if (!window.confirm(currentGroupId + ' の団体予約を承認します。よろしいですか？')) return;
+      clearError();
+      staffRun()
+        .withSuccessHandler(function () { window.alert('承認しました。'); loadDetail(currentGroupId); loadList(); })
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .approveGroupBooking(currentGroupId, staffId);
+    });
+
+    document.getElementById('rejectBtn').addEventListener('click', function () {
+      var reason = document.getElementById('rejectReason').value.trim();
+      if (!reason) { showError('却下理由を入力してください'); return; }
+      if (!window.confirm(currentGroupId + ' の団体予約を却下します。よろしいですか？')) return;
+      clearError();
+      staffRun()
+        .withSuccessHandler(function () { window.alert('却下しました。'); document.getElementById('detailCard').style.display = 'none'; loadList(); })
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .rejectGroupBooking(currentGroupId, staffId, reason);
+    });
+
+    document.getElementById('checkinBtn').addEventListener('click', function () {
+      var adults = Number(document.getElementById('checkinAdults').value) || 0;
+      var children = Number(document.getElementById('checkinChildren').value) || 0;
+      var paymentMethod = document.getElementById('checkinPaymentMethod').value;
+      if (adults + children <= 0) { showError('人数を入力してください'); return; }
+      if (!window.confirm(currentGroupId + ' を当日受付（チェックイン）します。よろしいですか？')) return;
+      clearError();
+      staffRun()
+        .withSuccessHandler(function (res) {
+          window.alert('チェックインしました。リストバンド番号：' + res.bandNos.join('、')
+            + '　料金：¥' + res.fee.total.toLocaleString() + '（' + (PAYMENT_LABEL_METHOD[paymentMethod] || paymentMethod) + 'で支払済として記録しました）');
+          loadDetail(currentGroupId); loadList();
+        })
+        .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
+        .checkInGroupBooking(currentGroupId, adults, children, staffId, paymentMethod);
+    });
+
+    function render(list) {
+      document.getElementById('totalTag').textContent = list.length + '件';
+      var box = document.getElementById('list');
+      if (list.length === 0) {
+        box.innerHTML = '<div class="empty-hint">対象の団体予約はありません</div>';
+        return;
+      }
+      box.innerHTML = '';
+      list.forEach(function (g) {
+        var row = document.createElement('div');
+        row.className = 'list-row';
+        row.style.cursor = 'pointer';
+        row.innerHTML =
+          '<div class="list-row-top">' +
+            '<div class="list-row-ticket">' + g.groupName + '</div>' +
+            badgeHtml(g.status) +
+          '</div>' +
+          '<div class="list-row-sub">' + g.bookingDateLabel + '　' + g.startTime + '〜' + g.endTime +
+            '　計' + (Number(g.adultCount) + Number(g.childCount)) + '名</div>';
+        row.addEventListener('click', function () { loadDetail(g.groupId); });
+        box.appendChild(row);
+      });
+    }
+
+    function loadList() {
+      staffRun()
+        .withSuccessHandler(render)
+        .withFailureHandler(function (err) { showError('一覧の取得に失敗しました：' + (err && err.message ? err.message : err)); })
+        .getGroupBookingListView();
+    }
+
+    function loadStaffLabel() {
+      if (!staffId) return;
+      staffRun()
+        .withSuccessHandler(function (staff) {
+          if (staff) {
+            document.getElementById('staffLabel').textContent =
+              staff.staffName + (staff.role === 'ADMIN' ? '（管理者）' : '');
+          }
+        })
+        .getStaffById(staffId);
+    }
+
+    renderAdminSidebar('groupbooking');
+    loadStaffLabel();
+    loadList();
+    setInterval(loadList, 30000);
+  </script>
+</body>
+</html>

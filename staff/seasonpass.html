@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script><meta name="referrer" content="no-referrer"><base target="_top"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script></head>
+<body data-layout-page="SeasonPass" class="layout-refresh">
+<section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
+  <div class="operation-bar-items">
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16m-12 4h3"/></svg>運営方法</span><span class="operation-bar-value" id="operationBarStatus">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>運営時間</span><span class="operation-bar-value" id="operationBarHours">読み込み中…</span></div>
+    <div class="operation-bar-item"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>天気</span><span class="operation-bar-value" id="operationBarWeather">読み込み中…</span></div>
+    <div class="operation-bar-item operation-mode-help"><span class="operation-bar-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>運営モード</span><button type="button" id="operationModeTrigger" class="operation-mode-trigger" aria-expanded="false" aria-controls="operationModeHelp" aria-describedby="operationModeHelp"><span class="operation-bar-value" id="operationBarMode">読み込み中…</span><span class="operation-mode-info" aria-hidden="true">ⓘ</span><span class="operation-mode-sr">モードの説明</span></button><div id="operationModeHelp" class="operation-mode-popover" role="tooltip" hidden><strong>入場・呼出モードについて</strong><p id="operationModeBasis">氷上人数＋呼出中人数の合計で切り替わります。</p><div id="operationModeDefinitions"><p>モードの説明を読み込み中です。</p></div><p id="operationModeHelpStatus" class="operation-mode-note"></p></div></div>
+    <div class="operation-bar-item operation-bar-count">
+      <div class="operation-bar-count-text"><div class="operation-bar-count-numbers"><span class="operation-bar-value" id="operationBarCount">—</span><span id="operationBarCapacity" class="operation-bar-capacity"> / —人</span></div><span class="operation-bar-label">現在の氷上人数</span></div>
+      <div id="operationBarOccupancy" class="operation-bar-track" role="progressbar" aria-label="氷上人数の定員に対する割合" aria-valuemin="0" aria-valuemax="100" aria-valuetext="読み込み中"><span id="operationBarFill" class="operation-bar-fill"></span></div>
+    </div>
+  </div><div id="operationBarMeta" class="operation-bar-meta" role="status">運営情報を取得しています</div>
+</section>
+
+<div class="app-shell"><div id="adminSidebar" class="sidebar"></div><main class="main-content">
+  <div class="page-header"><div><h1 class="page-header-title">シーズンパス</h1><p class="page-header-sub">お客様のLINE申込を確認し、支払い後に発行します</p></div><span class="chip" id="staffLabel"></span></div>
+  <div id="errorBox" class="msg-error" style="display:none;" role="alert"></div><p id="passDeskNotice" role="status" style="white-space:pre-line;"></p>
+  <section class="card" id="passLineAccountNotice"><h2 class="section-title">シーズンパスのお申込は必ずLINEから</h2><p>窓口での代理登録・直接発行は行いません。お客様ご自身のLINEで、利用する方の氏名・プランを入力してお申し込みいただきます。</p><p>パスは申込時のLINEアカウントに紐づき、発行後はそのアカウントのマイパスと顧客管理から確認できます。別のLINEアカウントへは引き継がれません。</p><a class="btn btn-outline" href="https://liff.line.me/2011760110-g8MzS4CT?view=passapply" target="_blank" rel="noopener noreferrer">お客様向けLINE申込画面</a><p class="loading">お客様のスマートフォンで、LINEのマイパスから「シーズンパスを申し込む」を開いていただいてください。</p></section>
+  <section class="card"><h2 class="section-title">LINE申込の確認・パス発行 <span class="tag" id="pendingTotalTag">0件</span></h2>
+    <div class="field"><label for="pendingSearch">お申込番号または氏名</label><input id="pendingSearch" placeholder="例：AP0001 / 山田"></div>
+    <button id="pendingRefresh" class="btn btn-outline" type="button">申込一覧を更新</button><p class="loading">お客様のLINE画面の申込番号・氏名・プラン・金額を確認し、実際にお支払いを受け取ってから発行してください。</p><div id="pendingList"></div>
+  </section>
+</main></div>
+<script>
+var staffId=window.staffPortal.staffId,sessionToken=window.staffPortal.sessionToken,baseUrl=window.staffPortal.baseUrl;
+var pendingCache=[],issuing=false;
+function showError(msg){document.getElementById('errorBox').textContent=msg;document.getElementById('errorBox').style.display='block';}
+function renderPendingApplications(){
+  var query=document.getElementById('pendingSearch').value.trim(),box=document.getElementById('pendingList');box.replaceChildren();
+  var list=pendingCache.filter(function(a){return !query||a.applyNo.indexOf(query)!==-1||String(a.holderName).indexOf(query)!==-1;});document.getElementById('pendingTotalTag').textContent=list.length+'件';
+  if(!list.length){box.textContent='該当する申込はありません。';return;}
+  list.forEach(function(a){
+    var row=document.createElement('article');row.className='list-row';
+    function line(text){var p=document.createElement('p');p.textContent=text;row.appendChild(p);}
+    line(a.holderName+'（'+a.applyNo+'）');line(a.planName+'（'+(a.ageType==='ADULT'?'大人':'子供')+'）／¥'+Number(a.price).toLocaleString('ja-JP'));line('申込日 '+a.appliedAtLabel+'／支払期限 '+a.deadlineLabel);
+    if(!a.verifiedLine){line('LINE本人確認のない旧申込です。お客様のLINEから再度お申し込みください。');}
+    else if(a.status==='ISSUING'){line('発行処理の途中です。パス番号 '+a.completedPassNo+' のパス・売上を管理者に確認してください。発行し直さないでください。');}
+    else if(a.expired){line('支払期限切れです。LINEから再度お申し込みください。');}
+    else{
+      var actions=document.createElement('div');actions.className='grid';var select=document.createElement('select');select.setAttribute('aria-label',a.applyNo+'のお支払い方法');select.innerHTML='<option value="CASH">現金</option><option value="PAYPAY">PayPay</option>';
+      var button=document.createElement('button');button.type='button';button.className='btn';button.textContent='支払いを確認して発行';button.disabled=issuing;
+      button.addEventListener('click',function(){if(issuing||!window.confirm(a.holderName+'様（'+a.applyNo+'）の¥'+Number(a.price).toLocaleString('ja-JP')+'を受け取りましたか？このLINE申込にパスを発行します。'))return;
+        issuing=true;renderPendingApplications();document.getElementById('errorBox').style.display='none';
+        staffRun().withSuccessHandler(function(passNo){issuing=false;document.getElementById('passDeskNotice').textContent='発行済み：'+a.applyNo+' → '+passNo+'\nお客様のLINEのマイパスで確認できます。';loadPendingApplications();}).withFailureHandler(function(e){issuing=false;showError(e.message||String(e));loadPendingApplications();}).completeSeasonPassApplication(a.applyNo,staffId,select.value);
+      });actions.append(select,button);row.appendChild(actions);
+    }
+    box.appendChild(row);
+  });
+}
+function loadPendingApplications(){staffRun().withSuccessHandler(function(list){pendingCache=list;renderPendingApplications();}).withFailureHandler(function(e){showError(e.message||String(e));}).getPendingSeasonPassApplicationsView();}
+document.getElementById('pendingSearch').addEventListener('input',renderPendingApplications);document.getElementById('pendingRefresh').addEventListener('click',function(){if(!issuing)loadPendingApplications();});
+renderAdminSidebar('seasonpass');loadPendingApplications();
+</script></body></html>

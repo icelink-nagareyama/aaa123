@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>アイスパークin流山 管理画面</title><script src="bridge.js"></script>
+  <base target="_top">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+  <style>
+    body.login-body { min-height: 100vh; display: grid; place-items: center; padding: 28px 20px;
+      background: radial-gradient(ellipse at 15% 20%, #D9EDFD 0, transparent 50%), radial-gradient(ellipse at 90% 90%, #E4F2FC 0, transparent 45%), #F3F8FD; }
+    .login-card { width: 100%; max-width: 420px; background: #fff; border: 1px solid #D8E6F3; border-radius: 24px;
+      padding: 36px; box-shadow: 0 18px 60px rgba(8,56,107,.08); }
+    .login-logo { display:flex; justify-content:center; margin:0 0 20px; }
+    .login-logo .app-logo { width:240px; }
+    .login-eyebrow { font-size: 10px; letter-spacing: .13em; color: #354F6B; font-weight: 700; margin-bottom: 7px; }
+    .login-title { font-size: 23px; font-weight: 800; letter-spacing: -.04em; color: var(--brand-dark); line-height: 1.4; }
+    .login-sub { font-size: 12px; color: #52657A; margin: 8px 0 30px; }
+    .login-card .field { margin-bottom: 20px; }
+    #pinInput { letter-spacing: .15em; }
+    #pinInput::placeholder { letter-spacing: normal; }
+    .login-footnote { font-size: 11px; color: #52657A; line-height: 1.8; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid #D8E6F3; }
+    .login-continue { display:block; width:100%; min-height:48px; padding:13px 18px; background:#08749b; color:#fff; border-radius:10px; font-size:15px; font-weight:700; text-align:center; }
+    .login-continue:hover { background:#075c7b; color:#fff; }
+    .login-continue:focus-visible { outline:3px solid #096f9c; outline-offset:4px; }
+    .login-success { color:#155e46; background:#edf8f2; border:1px solid #b9dfca; border-radius:9px; padding:12px; margin:0 0 14px; font-size:13px; line-height:1.7; }
+    .login-card [hidden] { display:none!important; }
+    @media(max-width: 480px) { .login-card { padding: 28px 24px; } }
+  </style>
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-logo" id="loginLogo"></div>
+    <div class="login-eyebrow">STAFF LOGIN</div>
+    <div class="login-title">アイスパーク in 流山</div>
+    <div class="login-sub">担当者を選択して、PINでログインしてください。</div>
+    <div class="field">
+      <label for="staffSelect">担当者を選択してください</label>
+      <select id="staffSelect">
+        <option value="">読み込み中...</option>
+      </select>
+    </div>
+    <div class="field"><label for="pinInput">PIN（6〜12桁）</label>
+      <input type="password" id="pinInput" inputmode="numeric" autocomplete="current-password" minlength="6" maxlength="12" placeholder="担当者のPINを入力"></div>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:20px;"><input type="checkbox" id="testModeInput">テストモードでログイン</label>
+    <button class="btn" id="loginBtn" style="width:100%;" disabled>ログイン</button>
+    <p id="loginSuccess" class="login-success" role="status" hidden>認証できました。下のボタンを押して管理画面へ進んでください。</p>
+    <a id="loginContinue" class="login-continue" target="_top" hidden>管理画面を開く →</a>
+    <div id="errorMsg" class="msg-error" role="alert" style="display:none; text-align:left;"></div>
+    <p class="login-footnote">担当者ごとのPINでログインします。8時間で自動的にログインが終了します。</p>
+  </div>
+
+  <script>
+    renderAppLogo(document.getElementById("loginLogo"));
+    var baseUrl = window.staffPortal.baseUrl;
+    var staffSelect = document.getElementById('staffSelect');
+    var loginBtn = document.getElementById('loginBtn');
+    var errorMsg = document.getElementById('errorMsg');
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+    }
+
+    google.script.run
+      .withSuccessHandler(function (list) {
+        staffSelect.innerHTML = '';
+        if (!list || list.length === 0) {
+          staffSelect.innerHTML = '<option value="">担当者データがありません</option>';
+          return;
+        }
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '-- 選択してください --';
+        staffSelect.appendChild(placeholder);
+        list.forEach(function (s) {
+          var opt = document.createElement('option');
+          opt.value = s.staffId;
+          opt.textContent = s.staffName + (s.role === 'ADMIN' ? '（管理者）' : '');
+          staffSelect.appendChild(opt);
+        });
+        loginBtn.disabled = false;
+      })
+      .withFailureHandler(function (err) {
+        showError('担当者リストの取得に失敗しました：' + (err && err.message ? err.message : err));
+      })
+      .getStaffListPublic();
+
+    loginBtn.addEventListener('click', function () {
+      var staffId = staffSelect.value;
+      if (!staffId) {
+        showError('担当者を選択してください');
+        return;
+      }
+      var pinInput = document.getElementById('pinInput');
+      if (!/^\d{6,12}$/.test(pinInput.value)) { showError('PINは6〜12桁の数字で入力してください'); return; }
+      errorMsg.style.display = 'none'; loginBtn.disabled = true; loginBtn.textContent = '認証中…'; loginBtn.setAttribute('aria-busy','true');
+      google.script.run.withSuccessHandler(function (auth) {
+        pinInput.value = '';
+        loginBtn.removeAttribute('aria-busy');
+        if (!auth || typeof auth.sessionToken !== 'string' || !auth.sessionToken) {
+          loginBtn.disabled = false; loginBtn.textContent = 'ログイン'; showError('認証結果を確認できませんでした。もう一度ログインしてください。'); return;
+        }
+        // HtmlService sandbox navigation must be initiated by an actual user gesture.
+        // An asynchronous authentication callback can lose that gesture in Safari.
+        var next = document.getElementById('loginContinue');
+        next.href = baseUrl + '?page=top';
+        staffSelect.disabled = true; pinInput.disabled = true; document.getElementById('testModeInput').disabled = true;
+        loginBtn.hidden = true; document.getElementById('loginSuccess').hidden = false; next.hidden = false; next.focus();
+      }).withFailureHandler(function (err) {
+        pinInput.value = ''; loginBtn.disabled = false; loginBtn.textContent = 'ログイン'; loginBtn.removeAttribute('aria-busy');
+        showError(err && err.message ? err.message : err);
+      }).authenticateStaff(staffId, pinInput.value, document.getElementById('testModeInput').checked);
+    });
+    document.getElementById('pinInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !loginBtn.disabled) loginBtn.click();
+    });
+  </script>
+</body>
+</html>
