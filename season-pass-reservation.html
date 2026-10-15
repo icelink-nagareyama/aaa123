@@ -94,6 +94,31 @@
   .pass-rules summary { cursor:pointer; font-weight:bold; padding:4px 0; }
   .pass-rules ul { padding-left:20px; color:#445; line-height:1.8; }
   .pass-rules li + li { margin-top:6px; }
+/* customer-portal */
+  #customerPortal { max-width:640px; overflow-wrap:anywhere; }
+  #customerPortal h2 { font-size:18px; color:var(--brand-dark); margin:0 0 16px; }
+  #customerPortal h3 { font-size:23px; color:var(--brand-dark); margin:0 0 10px; font-variant-numeric:tabular-nums; }
+  #customerPortal .cp-nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-bottom:20px; }
+  #customerPortal .cp-nav a { min-height:48px; display:flex; align-items:center; justify-content:center; padding:8px 2px; color:var(--brand-dark); background:#fff; border:1px solid var(--border); border-radius:8px; font-size:14px; text-decoration:none; }
+  #customerPortal input:not([type=checkbox]), #customerPortal select { width:100%; min-width:0; min-height:48px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font:inherit; font-size:16px; background:#fff; }
+  #customerPortal .btn, #customerPortal button { min-height:48px; font-size:16px; }
+  #customerPortal .btn.secondary { width:100%; color:var(--brand); border-color:var(--brand); margin-bottom:16px; padding:12px; }
+  #customerPortal .stepper { display:flex; align-items:center; gap:8px; }
+  #customerPortal .stepper button { flex:0 0 48px; width:48px; background:#eaf6fb; color:var(--brand-dark); border:1px solid var(--border); border-radius:8px; font-size:24px; }
+  #customerPortal .stepper input { text-align:center; min-width:0; }
+  #customerPortal .fee-box { display:flex; justify-content:space-between; gap:12px; padding:16px; margin-top:20px; background:#eaf6fb; border-radius:10px; }
+  #customerPortal .fee-box strong { color:var(--brand-dark); font-size:24px; }
+  #customerPortal .cp-ticket { border-top:1px solid var(--border); padding:18px 0; }
+  #customerPortal .cp-status { font-size:18px; font-weight:bold; color:var(--brand); }
+  #customerPortal .cp-terms { white-space:pre-wrap; line-height:1.9; padding:16px; margin-top:20px; border:1px solid var(--border); background:#f8fbfd; border-radius:8px; }
+  #customerPortal .cp-check { display:flex; align-items:flex-start; gap:10px; margin-top:20px; font-size:14px; line-height:1.7; }
+  #customerPortal .cp-check input { width:22px; height:22px; flex:0 0 22px; margin:2px 0; }
+  #customerPortal dl { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; }
+  #customerPortal dt, #customerPortal dd { margin:0; padding:8px 0; border-bottom:1px solid var(--border); }
+  #customerPortal dd { text-align:right; font-variant-numeric:tabular-nums; }
+  #customerPortal button:focus-visible, #customerPortal a:focus-visible { outline:3px solid #087da9; outline-offset:3px; }
+  #customerPortal input:focus, #customerPortal select:focus { outline:2px solid #087da9; outline-offset:2px; }
+
 </style>
 </head>
 <body>
@@ -125,7 +150,7 @@
     <input id="registrationLineId" type="text" readonly style="width:100%;font-size:12px" aria-label="登録用LINEユーザーID">
   </div>
 
-  <section class="card" id="consentNav"><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=consent">利用同意書を確認する</a></section>
+  <section class="card" id="consentNav"><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=reception">LINEで事前受付する</a><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=status">受付状況を確認する</a><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=consent">利用同意書を確認する</a></section>
 <div id="passSummary" class="hidden"><div id="passList"></div><button type="button" class="btn secondary" id="refreshPasses">パス情報を更新</button></div>
 <div id="premiumNote" class="card hidden"><p class="muted">優先予約は有効なプレミアムパスをお持ちの方がご利用いただけます。</p></div>
 <div id="mainCard" class="hidden">
@@ -187,6 +212,88 @@
     $('gcRefresh').addEventListener('click',function(){run(load);});
     $('gcOpen').addEventListener('click',function(){run(function(){return api('startConsent').then(function(r){if(r.submitted)return load();var url=new URL(r.url);if(url.protocol!=='https:'||url.hostname!=='docs.google.com'||!url.pathname.startsWith('/forms/'))throw Error('同意書のURLを確認できません。');$('gcLink').href=url.href;hide('gcLink',false);hide('gcOpen',true);$('gcStatus').textContent='「Googleフォームへ進む」から同意書を送信してください。';});});});
     run(load);
+  };
+})();
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var consentPortal = window.startCustomerPortal;
+  window.startCustomerPortal = function (config) {
+    if (config.view === 'consent') return consentPortal(config);
+    if (['reception','status'].indexOf(config.view) === -1) return;
+    var root=document.getElementById('customerPortal');
+    var original=document.querySelector('.wrap:not(#customerPortal)');if(original)original.classList.add('hidden');
+    root.classList.remove('hidden');document.title=(config.view==='status'?'受付状況':'LINE事前受付')+' | エキサイティングアイスパークin流山';
+    root.innerHTML='<header class="header"><div class="logo">エキサイティングアイスパークin流山</div><h1 id="crTitle"></h1></header><nav class="cp-nav" aria-label="メニュー"><a id="crNavReception">受付</a><a id="crNavStatus">受付状況</a><a id="crNavConsent">同意書</a><a id="crNavPass">マイパス</a></nav><p id="crNotice" role="status" aria-live="polite">受付情報を確認中…</p><div id="crError" class="error-msg hidden" role="alert" style="display:block"></div><button id="crRefresh" class="btn secondary" type="button">最新の情報に更新</button><section id="crRecovery" class="card hidden"><h2>送信結果を確認する</h2><p id="crRecoveryText">通信が途切れました。受付が保存されている可能性があります。</p><button id="crCheck" class="btn secondary" type="button">保存状態を確認</button><button id="crRetry" class="btn secondary hidden" type="button">同じ内容で再送信</button></section><section id="crFormSection" class="card hidden"><h2>本日の整理番号を発行する</h2><p class="muted">現地の受付で番号をご提示ください。用品・割引と最終料金は現地で確定します。入場時刻の予約ではありません。</p><p id="crGate" class="muted"></p><div id="crForm"><label for="crName">お名前（任意）</label><input id="crName" type="text" maxlength="100" autocomplete="name"><label for="crAdults">大人（中学生以上）</label><div class="stepper"><button id="crAdultMinus" type="button" aria-label="大人を減らす">−</button><input id="crAdults" type="number" min="0" max="99" value="1" inputmode="numeric"><button id="crAdultPlus" type="button" aria-label="大人を増やす">＋</button></div><label for="crChildren">子供（小学生以下）</label><div class="stepper"><button id="crChildMinus" type="button" aria-label="子供を減らす">−</button><input id="crChildren" type="number" min="0" max="99" value="0" inputmode="numeric"><button id="crChildPlus" type="button" aria-label="子供を増やす">＋</button></div><div class="fee-box"><span>料金目安</span><strong id="crEstimate">—</strong></div><p id="crLarge" class="muted hidden">ご利用人数は当日の受付でも確認します。</p><div id="crFamily" class="hidden"><p id="crFamilyNames" class="muted"></p><label class="cp-check"><input id="crFamilyCheck" type="checkbox"><span>今回の利用者全員が、上記の同意対象のご家族に含まれます。</span></label></div><p class="muted">ご家族以外の方の同意は、その方のご家族ごとに必要です。</p><button id="crSubmit" class="btn" type="button" disabled>整理番号を発行する</button></div><div id="crCreated" class="hidden"><p id="crCreatedText"></p><button id="crAnother" class="btn secondary" type="button">新しい受付を作る</button></div></section><section class="card"><h2>本日の受付状況</h2><p class="muted">このLINEアカウントで発行した受付のみ表示します。</p><div id="crTickets"></div><a id="crConsentLink" class="btn secondary">同意書・ご家族の履歴を確認する</a></section>';
+    function $(id){return document.getElementById(id);}
+    function hide(id,on){$(id).classList.toggle('hidden',on);}
+    function note(s){$('crNotice').textContent=s;}
+    function error(e){$('crError').textContent=e.name==='AbortError'?'通信に時間がかかっています。少し待ってから更新してください。':e.message||'通信できませんでした。';hide('crError',false);}
+    $('crTitle').textContent=config.view==='status'?'受付状況':'LINE事前受付';
+    [['crNavReception','reception'],['crNavStatus','status'],['crNavConsent','consent'],['crNavPass','']].forEach(function(a){$(a[0]).href='https://liff.line.me/'+config.liffId+(a[1]?'?view='+a[1]:'');});
+    $('crConsentLink').href='https://liff.line.me/'+config.liffId+'?view=consent';hide('crFormSection',config.view!=='reception');
+    var data=null,busy=false,pending=null,storageKey='',previewGeneration=0,previewTimer=null;
+    function api(operation,input){
+      var token=window.liff.getAccessToken();if(!token)return Promise.reject(Error('LINEログインを確認できません。LINEから開き直してください。'));
+      var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},35000);
+      return fetch(config.baseUrl+'?source=api',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'customerLiff',params:[Object.assign({},input||{},{operation:operation,accessToken:token})]})})
+        .then(function(r){if(!r.ok)throw Error('サーバーと通信できませんでした。');return r.json();}).then(function(r){if(!r.ok)throw Error(r.error||'処理できませんでした。');return r.result;}).finally(function(){clearTimeout(timer);});
+    }
+    function store(){try{if(storageKey){if(pending)sessionStorage.setItem(storageKey,JSON.stringify(pending));else sessionStorage.removeItem(storageKey);}}catch(e){}}
+    function lock(){root.querySelectorAll('input,button').forEach(function(e){e.disabled=busy||!!pending;});$('crRefresh').disabled=busy;$('crCheck').disabled=busy;$('crRetry').disabled=busy;$('crSubmit').disabled=busy||!!pending||!data||!data.info.issueAllowed;}
+    function run(fn){if(busy)return Promise.resolve();busy=true;lock();hide('crError',true);return Promise.resolve().then(fn).catch(error).finally(function(){busy=false;lock();});}
+    function operation(){return {requestId:window.crypto.randomUUID().replace(/-/g,''),issuedAt:Date.now()};}
+    function counts(){var a=Number($('crAdults').value),c=Number($('crChildren').value);if(!Number.isInteger(a)||!Number.isInteger(c)||a<0||c<0||a>99||c>99||a+c<1)throw Error('人数は0〜99の整数で、合計1名以上にしてください。');return {adults:a,children:c};}
+    function renderTickets(){
+      var box=$('crTickets');box.replaceChildren();if(!data.tickets.length){box.textContent='本日の受付はまだありません。';return;}
+      var family=data.consentDocument.status||{};
+      data.tickets.forEach(function(t){
+        var card=document.createElement('article');card.className='cp-ticket';
+        function line(tag,text,cls){var e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;card.appendChild(e);return e;}
+        line('h3','受付番号 '+t.ticketNo);line('p',t.statusLabel,'cp-status');line('p',t.issuedLabel+' ／ 大人'+t.adults+'名・子供'+t.children+'名');
+        line('p',t.status==='CALLED'?'受付カウンターへお越しください。'+(t.deadlineLabel?'呼び出し期限 '+t.deadlineLabel:''):t.status==='WAITING'?'先にお待ちの受付 '+t.aheadGroups+'組（目安）。番号を窓口でご提示ください。':t.status==='ON_ICE'&&t.exitScheduledLabel?'退場予定 '+t.exitScheduledLabel:'','muted');
+        line('p','同意書：'+({SUBMITTED:'提出済み',PAPER:'確認済み（紙）'}[t.consentStatus]||'この受付への適用は未確認'),'muted');
+        if(t.consentFamilyNames)line('p','同意対象のご家族：'+t.consentFamilyNames,'muted');
+        if(['WAITING','CALLED'].includes(t.status)&&!['SUBMITTED','PAPER'].includes(t.consentStatus)&&family.submitted){
+          line('p','保存済みの同意対象のご家族：'+family.familyNames,'muted');
+          var label=document.createElement('label');label.className='cp-check';var check=document.createElement('input');check.type='checkbox';var span=document.createElement('span');span.textContent='この受付の利用者全員が、上記の同意対象のご家族に含まれます。';label.append(check,span);card.appendChild(label);
+          var button=document.createElement('button');button.type='button';button.className='btn secondary';button.textContent='この受付に同意履歴を適用する';button.addEventListener('click',function(){if(busy||pending)return;if(!check.checked){error(Error('利用者全員が対象のご家族であることを確認してください。'));return;}pending={operation:'confirmFamilyConsent',ticketNo:t.ticketNo,familyConfirmed:true,familyConsentVersion:family.version,expectedAdults:t.adults,expectedChildren:t.children,operationMeta:operation()};store();run(send);});card.appendChild(button);
+        }
+        box.appendChild(card);
+      });
+    }
+    function load(){return api('bootstrap').then(function(r){
+      var priorFamily=data&&data.consentDocument.status;data=r;var nextKey='icepark.reception.pending.'+r.ownerKey+'.'+r.info.date;
+      if(storageKey&&storageKey!==nextKey)pending=null;storageKey=nextKey;
+      if(!pending){try{var saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');if(saved&&saved.operationMeta&&['createTicket','confirmFamilyConsent'].includes(saved.operation))pending=saved;}catch(e){}}
+      renderTickets();var family=r.consentDocument.status||{};hide('crFamily',!family.submitted);if(!family.submitted||priorFamily&&(priorFamily.version!==family.version||priorFamily.familyNames!==family.familyNames))$('crFamilyCheck').checked=false;
+      $('crFamilyNames').textContent=family.submitted?'同意対象のご家族：'+family.familyNames:'';
+      $('crGate').textContent=r.info.issueMessage;if($('crAdults').value==1&&$('crChildren').value==0)$('crEstimate').textContent='¥'+Number(r.info.initialEstimate).toLocaleString('ja-JP');else if(config.view==='reception')preview();
+      hide('crRecovery',!pending);note('更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));lock();
+    });}
+    function complete(result,kind){pending=null;store();hide('crRecovery',true);hide('crRetry',true);
+      if(kind==='createTicket'){hide('crForm',true);hide('crCreated',false);$('crCreatedText').textContent='整理番号は「'+result.ticketNo+'」です。受付カウンターでご提示ください。'+(result.notificationFailed?' LINE通知は送れませんでしたが、整理番号は発行済みです。':'');}
+      return load().catch(error).then(function(){note(kind==='createTicket'?'整理番号の発行が完了しました。':'この受付にご家族の同意履歴を適用しました。');});
+    }
+    function check(){if(!pending)return Promise.resolve();return api('operationStatus',{operationMeta:pending.operationMeta}).then(function(s){
+      if(s.state==='DONE')return complete(s.result,pending.operation);
+      if(s.state==='NOT_FOUND'){note('保存記録はまだ見つかりません。同じ内容で再送信できます。');hide('crRetry',false);}
+      else if(s.state==='REJECTED'){pending=null;store();hide('crRecovery',true);error(Error(s.message||'受付できませんでした。入力と受付時間を確認してください。'));}
+      else{hide('crRetry',true);$('crRecoveryText').textContent=(s.ticketNo?'受付番号「'+s.ticketNo+'」：':'')+(s.message||'保存状態を受付スタッフに確認してください。');}
+    });}
+    function send(){if(!pending)return Promise.resolve();var request=pending;store();hide('crRetry',true);return api(request.operation,request).then(function(r){return complete(r,request.operation);}).catch(function(){hide('crRecovery',false);error(Error('送信結果を確認しています。新しい受付を繰り返さず、保存状態を確認してください。'));return check();});}
+    function preview(){clearTimeout(previewTimer);var gen=++previewGeneration;previewTimer=setTimeout(function(){var input;try{input=counts();}catch(e){$('crEstimate').textContent='—';return;}api('preview',input).then(function(r){if(gen!==previewGeneration)return;$('crEstimate').textContent='¥'+Number(r.total).toLocaleString('ja-JP');hide('crLarge',!r.needsConfirmation);}).catch(error);},300);}
+    [['crAdultMinus','crAdults',-1],['crAdultPlus','crAdults',1],['crChildMinus','crChildren',-1],['crChildPlus','crChildren',1]].forEach(function(a){$(a[0]).addEventListener('click',function(){$(a[1]).value=Math.min(99,Math.max(0,Number($(a[1]).value)+a[2]));preview();});});
+    ['crAdults','crChildren'].forEach(function(id){$(id).addEventListener('input',preview);});
+    $('crSubmit').addEventListener('click',function(){if(busy||pending||!data||!data.info.issueAllowed)return;try{var c=counts(),family=data.consentDocument.status||{};pending=Object.assign(c,{operation:'createTicket',customerName:$('crName').value,familyConfirmed:family.submitted===true&&$('crFamilyCheck').checked,familyConsentVersion:family.version||'',operationMeta:operation()});store();run(send);}catch(e){error(e);}});
+    $('crCheck').addEventListener('click',function(){run(check);});$('crRetry').addEventListener('click',function(){run(send);});
+    $('crRefresh').addEventListener('click',function(){run(function(){return load().then(function(){if(pending)return check();});});});
+    $('crAnother').addEventListener('click',function(){if(pending||busy)return;hide('crForm',false);hide('crCreated',true);$('crName').value='';$('crAdults').value=1;$('crChildren').value=0;$('crFamilyCheck').checked=false;preview();});
+    document.addEventListener('visibilitychange',function(){if(!document.hidden&&!busy&&!pending)run(load);});
+    setInterval(function(){if(!document.hidden&&!busy&&!pending)run(load);},30000);
+    run(function(){return load().then(function(){if(pending)return check();});});
   };
 })();
 
@@ -342,13 +449,13 @@
         var btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'LINEでログイン';
         btn.addEventListener('click', function () {
           btn.disabled = true;
-          try { window.liff.login({redirectUri:window.location.origin + window.location.pathname + (new URLSearchParams(window.location.search).get('view') === 'consent' ? '?view=consent' : '')}); }
+          try { window.liff.login({redirectUri:window.location.origin + window.location.pathname + (['consent','reception','status'].includes(new URLSearchParams(window.location.search).get('view')) ? '?view='+encodeURIComponent(new URLSearchParams(window.location.search).get('view')) : '')}); }
           catch (e) { btn.disabled = false; fatal('LINEログインを開始できませんでした。LINEから開き直してください。'); }
         });
         $('fatalCard').appendChild(btn); return;
       }
-              if (new URLSearchParams(window.location.search).get('view') === 'consent') {
-          window.startCustomerPortal({view:'consent',liffId:LIFF_ID,baseUrl:BASE_URL});
+              if (['consent','reception','status'].includes(new URLSearchParams(window.location.search).get('view'))) {
+          window.startCustomerPortal({view:new URLSearchParams(window.location.search).get('view'),liffId:LIFF_ID,baseUrl:BASE_URL});
           return;
         }
 $('loadingCard').textContent = 'プレミアムパスを確認中…';
