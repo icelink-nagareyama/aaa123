@@ -100,7 +100,7 @@
 <div class="wrap">
   <div class="header">
     <div class="logo">エキサイティングアイスパークin流山</div>
-    <h1>マイパス</h1>
+    <h1 id="myPassHeading">マイパス</h1>
     <span class="badge-premium">パス確認・プレミアム予約</span>
   </div>
 
@@ -125,7 +125,8 @@
     <input id="registrationLineId" type="text" readonly style="width:100%;font-size:12px" aria-label="登録用LINEユーザーID">
   </div>
 
-  <div id="passSummary" class="hidden"><div id="passList"></div><button type="button" class="btn secondary" id="refreshPasses">パス情報を更新</button></div>
+  <section class="card" id="consentNav"><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=consent">利用同意書を確認する</a></section>
+<div id="passSummary" class="hidden"><div id="passList"></div><button type="button" class="btn secondary" id="refreshPasses">パス情報を更新</button></div>
 <div id="premiumNote" class="card hidden"><p class="muted">優先予約は有効なプレミアムパスをお持ちの方がご利用いただけます。</p></div>
 <div id="mainCard" class="hidden">
     <p id="memberInfo" class="muted"></p>
@@ -152,7 +153,45 @@
   </div>
 </div>
 
-<p style="text-align:center;color:#08386B;font-size:12px">マイパス</p><script>
+<p style="text-align:center;color:#08386B;font-size:12px">マイパス</p><main id="customerPortal" class="wrap hidden"></main>
+<script>
+(function () {
+  window.startCustomerPortal = function (config) {
+    if (config.view !== 'consent') return;
+    ['loadingCard','fatalCard','notMemberCard','mainCard','passSummary','premiumNote','passLineAccountNotice','consentNav'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.add('hidden');});
+    var heading=document.getElementById('myPassHeading');if(heading)heading.textContent='利用同意書';
+    var root=document.getElementById('customerPortal');root.classList.remove('hidden');
+    root.innerHTML='<section class="card"><h1>利用同意書</h1><p class="muted">同意履歴は、提出した方のLINEアカウントに紐づき、同意対象のご家族に適用されます。同じLINEアカウントから受付する場合、次回以降の提出は不要です。別のLINEアカウントから受付する場合は、同じご家族でも再度提出してください。</p><p class="muted">友人など、別のご家族の同意は含まれません。ご家族ごとに代表者が提出してください。</p><p id="gcStatus" role="status" aria-live="polite">同意履歴を確認中…</p><p id="gcFamily" class="muted"></p><p id="gcError" class="error-msg hidden" role="alert"></p><button id="gcOpen" class="btn hidden" type="button">同意書を開く準備をする</button><a id="gcLink" class="btn hidden" target="_blank" rel="noopener noreferrer">Googleフォームへ進む</a><p class="muted">フォーム送信後は、この画面に戻り「最新の情報に更新」を押してください。反映には少し時間がかかる場合があります。</p><button id="gcRefresh" class="btn secondary" type="button">最新の情報に更新</button><a id="gcPass" class="btn secondary">マイパスに戻る</a></section>';
+    function $(id){return document.getElementById(id);}
+    function hide(id,value){$(id).classList.toggle('hidden',value);}
+    $('gcPass').href='https://liff.line.me/'+config.liffId;
+    var busy=false,submitted=false;
+    function api(operation){
+      var token=window.liff.getAccessToken();if(!token)return Promise.reject(Error('LINEログインを確認できません。LINEから開き直してください。'));
+      var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},35000);
+      return fetch(config.baseUrl+'?source=api',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'consentLiff',params:[{operation:operation,accessToken:token}]})})
+        .then(function(r){if(!r.ok)throw Error('サーバーと通信できませんでした。');return r.json();})
+        .then(function(r){if(!r.ok)throw Error(r.error||'処理できませんでした。');return r.result;})
+        .finally(function(){clearTimeout(timer);});
+    }
+    function error(e){$('gcError').textContent=e.name==='AbortError'?'通信に時間がかかっています。「最新の情報に更新」で確認してください。':e.message||'通信できませんでした。';hide('gcError',false);}
+    function run(fn){if(busy)return;busy=true;$('gcOpen').disabled=true;$('gcRefresh').disabled=true;hide('gcError',true);return Promise.resolve().then(fn).catch(error).finally(function(){busy=false;$('gcOpen').disabled=false;$('gcRefresh').disabled=false;});}
+    function render(s){
+      submitted=!!s.submitted;
+      $('gcStatus').textContent=!s.available?'同意書のLINE連携は現在準備中です。受付でご案内します。':submitted?'このLINEアカウントの同意書は提出済みです。'+(s.submittedLabel?'（'+s.submittedLabel+'）':''):'このLINEアカウントでの同意書は、まだ確認できていません。';
+      $('gcFamily').textContent=submitted?'同意対象のご家族：'+s.familyNames:'';
+      hide('gcOpen',!s.available||submitted||!$('gcLink').classList.contains('hidden'));
+      if(!s.available||submitted){hide('gcLink',true);$('gcLink').removeAttribute('href');}
+    }
+    function load(){return api('consentStatus').then(render);}
+    $('gcRefresh').addEventListener('click',function(){run(load);});
+    $('gcOpen').addEventListener('click',function(){run(function(){return api('startConsent').then(function(r){if(r.submitted)return load();var url=new URL(r.url);if(url.protocol!=='https:'||url.hostname!=='docs.google.com'||!url.pathname.startsWith('/forms/'))throw Error('同意書のURLを確認できません。');$('gcLink').href=url.href;hide('gcLink',false);hide('gcOpen',true);$('gcStatus').textContent='「Googleフォームへ進む」から同意書を送信してください。';});});});
+    run(load);
+  };
+})();
+
+</script>
+<script>
 (function () {
   'use strict';
   var LIFF_ID = '2011760110-g8MzS4CT';
@@ -303,12 +342,16 @@
         var btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'LINEでログイン';
         btn.addEventListener('click', function () {
           btn.disabled = true;
-          try { window.liff.login({redirectUri:window.location.origin + window.location.pathname}); }
+          try { window.liff.login({redirectUri:window.location.origin + window.location.pathname + (new URLSearchParams(window.location.search).get('view') === 'consent' ? '?view=consent' : '')}); }
           catch (e) { btn.disabled = false; fatal('LINEログインを開始できませんでした。LINEから開き直してください。'); }
         });
         $('fatalCard').appendChild(btn); return;
       }
-      $('loadingCard').textContent = 'プレミアムパスを確認中…';
+              if (new URLSearchParams(window.location.search).get('view') === 'consent') {
+          window.startCustomerPortal({view:'consent',liffId:LIFF_ID,baseUrl:BASE_URL});
+          return;
+        }
+$('loadingCard').textContent = 'プレミアムパスを確認中…';
       return loadMember();
     }).catch(function (e) { if (!initializationStopped) stop(e.message || 'LINE接続に失敗しました。LINEから開き直してください。'); });
   }
