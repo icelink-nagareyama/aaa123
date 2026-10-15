@@ -194,7 +194,7 @@
     function api(operation){
       var token=window.liff.getAccessToken();if(!token)return Promise.reject(Error('LINEログインを確認できません。LINEから開き直してください。'));
       var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},35000);
-      return fetch(config.baseUrl+'?source=api',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'consentLiff',params:[{operation:operation,accessToken:token}]})})
+      return fetch(config.baseUrl+'?source=api&request='+Date.now(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'consentLiff',params:[{operation:operation,accessToken:token}]})})
         .then(function(r){if(!r.ok)throw Error('サーバーと通信できませんでした。');return r.json();})
         .then(function(r){if(!r.ok)throw Error(r.error||'処理できませんでした。');return r.result;})
         .finally(function(){clearTimeout(timer);});
@@ -238,7 +238,7 @@
     function api(operation,input){
       var token=window.liff.getAccessToken();if(!token)return Promise.reject(Error('LINEログインを確認できません。LINEから開き直してください。'));
       var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},35000);
-      return fetch(config.baseUrl+'?source=api',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'customerLiff',params:[Object.assign({},input||{},{operation:operation,accessToken:token})]})})
+      return fetch(config.baseUrl+'?source=api&request='+Date.now(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,body:JSON.stringify({action:'customerLiff',params:[Object.assign({},input||{},{operation:operation,accessToken:token})]})})
         .then(function(r){if(!r.ok)throw Error('サーバーと通信できませんでした。');return r.json();}).then(function(r){if(!r.ok)throw Error(r.error||'処理できませんでした。');return r.result;}).finally(function(){clearTimeout(timer);});
     }
     function store(){try{if(storageKey){if(pending)sessionStorage.setItem(storageKey,JSON.stringify(pending));else sessionStorage.removeItem(storageKey);}}catch(e){}}
