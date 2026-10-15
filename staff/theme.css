@@ -793,3 +793,71 @@
   .layout-refresh .operation-bar .operation-bar-meta { margin-top:12px; font-size:10px; text-align:left; }
   .layout-refresh .page-header-title { font-size:24px; }
 }
+/* One compact navigation layout below the existing 1200px desktop boundary.
+   Reset desktop flex-basis/width/sticky rules together, so a column shell cannot
+   retain a narrow, tall sidebar on tablets. No viewport height offsets needed. */
+@media(max-width:1199px) {
+  .layout-refresh .app-shell { display:block; min-height:0; }
+  .layout-refresh .sidebar {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px;
+    align-items:center; align-self:auto; position:static; top:auto;
+    flex:none; width:100%; min-width:0; height:auto; min-height:0; max-height:none;
+    overflow:visible; padding:14px 20px;
+  }
+  .layout-refresh .sidebar-logo {
+    grid-column:1; grid-row:1; display:flex; flex-direction:row; flex:none;
+    align-items:center; justify-content:flex-start; gap:10px; margin:0; padding:0;
+    min-width:0; width:auto; max-width:none; text-align:left;
+  }
+  .layout-refresh .sidebar-logo > span:last-child { min-width:0; flex:1 1 auto; }
+  .layout-refresh .sidebar-logo .brand-title { display:block; white-space:normal; word-break:keep-all; overflow-wrap:normal; line-height:1.5; }
+  .layout-refresh .sidebar-logo .app-logo-slot { flex:none; align-self:center; width:58px; max-width:58px; height:55px; }
+  .layout-refresh .sidebar-logo .app-logo { width:66px; height:66px; left:-4px; top:-6px; }
+  .layout-refresh #staffNavToggle { display:inline-flex; grid-column:2; grid-row:1; align-items:center; justify-content:center; min-height:48px; margin:0; }
+  .layout-refresh #staffLogoutBtn { grid-column:3; grid-row:1; align-self:center; margin:0; }
+  .layout-refresh #staffNavLinks {
+    display:none; grid-column:1 / -1; grid-row:2; flex:none; flex-direction:row;
+    flex-wrap:wrap; gap:4px 12px; min-width:0; width:100%; overflow:visible; padding:0;
+  }
+  .layout-refresh .layout-nav-open #staffNavLinks { display:flex; }
+  .layout-refresh #staffNavLinks > .sidebar-section-label { flex:0 0 100%; width:100%; }
+  .layout-refresh #staffNavLinks > .sidebar-nav-item { flex:0 1 calc(50% - 6px); min-width:0; white-space:normal; }
+  .layout-refresh .main-content { display:block; flex:none; min-width:0; width:100%; margin:0; padding:24px; }
+}
+@media(max-width:767px) {
+  .layout-refresh .sidebar { grid-template-columns:minmax(0,1fr) auto; padding:14px 16px; }
+  .layout-refresh .sidebar-logo { grid-column:1 / -1; grid-row:1; }
+  .layout-refresh #staffNavToggle { grid-column:1; grid-row:2; justify-self:start; }
+  .layout-refresh #staffLogoutBtn { grid-column:2; grid-row:2; }
+  .layout-refresh #staffNavLinks { grid-row:3; }
+  .layout-refresh #staffNavLinks > .sidebar-nav-item { flex-basis:100%; }
+  .layout-refresh .main-content { padding:20px 16px; }
+}
+/* Tablet landscape needs enough room for both a 208px rail and the work area.
+   The same width/orientation query is used by isStaffWideLayout_ below. */
+@media(min-width:1024px) and (max-width:1199px) and (orientation:landscape) {
+  .layout-refresh .app-shell { display:flex; flex-direction:row; align-items:stretch; min-height:100vh; }
+  .layout-refresh .sidebar {
+    display:flex; flex:0 0 208px; width:208px; flex-direction:column; flex-wrap:nowrap;
+    align-items:stretch; align-self:flex-start; position:sticky; top:0;
+    height:100vh; height:100dvh; overflow-y:auto; padding:18px 12px; gap:6px;
+  }
+  .layout-refresh .sidebar-logo { display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:0 0 8px; }
+  .layout-refresh .sidebar-logo > span:last-child { flex:none; width:100%; }
+  .layout-refresh .sidebar-logo .app-logo-slot { width:84px; max-width:84px; height:80px; }
+  .layout-refresh .sidebar-logo .app-logo { width:96px; height:96px; left:-6px; top:-9px; }
+  .layout-refresh .brand-caption { display:block; }
+  .layout-refresh #staffNavToggle { display:none; }
+  .layout-refresh #staffNavLinks { display:flex; flex:none; flex-direction:column; flex-wrap:nowrap; width:100%; }
+  .layout-refresh #staffNavLinks > .sidebar-section-label { flex:none; width:100%; }
+  .layout-refresh #staffNavLinks > .sidebar-nav-item { flex:none; width:100%; }
+  .layout-refresh #staffLogoutBtn { margin-top:auto; align-self:stretch; }
+  .layout-refresh .main-content { flex:1 1 0; width:auto; min-width:0; padding:24px; }
+  .layout-refresh.layout-dashboard .ops-flow-steps { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(display-mode:standalone) {
+  body.layout-refresh { padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px); }
+}
+.staff-install-help { margin-top:20px; padding-top:16px; border-top:1px solid var(--border); font-size:13px; line-height:1.8; color:#52657a; }
+.staff-install-help summary { min-height:44px; padding:8px 0; color:#075c7b; font-weight:600; cursor:pointer; }
+.staff-install-help ol { padding-left:22px; }

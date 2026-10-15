@@ -129,7 +129,21 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
     html += '</nav><button type="button" class="btn btn-outline mt-16" id="staffLogoutBtn">ログアウト</button>';
     mount.innerHTML = html;
     renderAppLogo(mount.querySelector(".app-logo-slot"));
-    document.getElementById("staffNavToggle").addEventListener("click",function(){var expanded=this.getAttribute("aria-expanded")!=="true";this.setAttribute("aria-expanded",String(expanded));mount.classList.toggle("layout-nav-open",expanded);});
+    var navToggle=document.getElementById('staffNavToggle'),navLinks=document.getElementById('staffNavLinks');
+    function closeStaffNavigation(){
+      var focusInside=navLinks.contains(document.activeElement);
+      navToggle.setAttribute('aria-expanded','false');mount.classList.remove('layout-nav-open');
+      if(focusInside&&getComputedStyle(navLinks).display==='none')navToggle.focus();
+    }
+    navToggle.addEventListener('click',function(){
+      if(this.getAttribute('aria-expanded')==='true')closeStaffNavigation();
+      else{this.setAttribute('aria-expanded','true');mount.classList.add('layout-nav-open');this.focus();}
+    });
+    mount.onkeydown=function(e){if(e.key==='Escape'&&navToggle.getAttribute('aria-expanded')==='true'){closeStaffNavigation();navToggle.focus();}};
+    if(mount.staffNavigationResize_)window.removeEventListener('resize',mount.staffNavigationResize_);
+    var lastNavigationWidth=window.innerWidth,lastNavigationWide=isStaffWideLayout_();
+    mount.staffNavigationResize_=function(){var wide=isStaffWideLayout_();if(lastNavigationWidth===window.innerWidth&&lastNavigationWide===wide)return;lastNavigationWidth=window.innerWidth;lastNavigationWide=wide;closeStaffNavigation();};
+    window.addEventListener('resize',mount.staffNavigationResize_);
     document.getElementById('staffLogoutBtn').addEventListener('click', function () {
       google.script.run.withSuccessHandler(function () {
         window.top.location.href = baseUrl + '?page=login';
@@ -171,16 +185,19 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
     document.getElementById('operationModeBasis').textContent=help.basis;box.replaceChildren();help.modes.forEach(function(m){var row=document.createElement('div'),name=document.createElement('strong'),range=document.createElement('small'),description=document.createElement('p');row.className='operation-mode-definition'+(m.code===help.currentMode?' is-current':'');name.textContent=m.label+(m.code===help.currentMode?'（現在）':'');range.textContent=m.range;description.textContent=m.description;row.append(name,range,description);box.appendChild(row);});document.getElementById('operationModeHelpStatus').textContent=help.note;var trigger=document.getElementById('operationModeTrigger');if(trigger&&trigger.updateModeHelpPosition&&!document.getElementById('operationModeHelp').hidden)trigger.updateModeHelpPosition();
   }
 
+  function isStaffWideLayout_(){return window.matchMedia('(min-width:1200px), (min-width:1024px) and (orientation:landscape)').matches;}
   function renderOperationBar() {
     if (operationBarTimer_ !== null) return;
     var bar = document.getElementById('operationBar');
     if (!bar) return; // 全スタッフHTMLの先頭にOperationHeaderを直接挿入済み。
     function syncHeaderHeight() {
       var main = document.querySelector('.main-content');
-      var besideSidebar = document.body.classList.contains('layout-refresh') && window.matchMedia('(min-width:1200px)').matches;
+      var besideSidebar = document.body.classList.contains('layout-refresh') && isStaffWideLayout_();
       if (besideSidebar && main && bar.parentElement !== main) main.prepend(bar);
       else if (!besideSidebar && bar.parentElement !== document.body) document.body.prepend(bar);
       document.documentElement.style.setProperty('--operation-bar-height', '0px');
+      var modeTrigger=document.getElementById('operationModeTrigger'),modeHelp=document.getElementById('operationModeHelp');
+      if(modeTrigger&&modeHelp&&!modeHelp.hidden&&modeTrigger.updateModeHelpPosition)modeTrigger.updateModeHelpPosition();
     }
     initializeOperationModeHelp_();
     syncHeaderHeight();

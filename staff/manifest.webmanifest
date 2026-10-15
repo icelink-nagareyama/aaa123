@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "アイスパークin流山 管理画面",
+  "short_name": "アイスパーク管理",
+  "lang": "ja",
+  "start_url": "./index.html?page=top",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#102b43",
+  "icons": [
+    {
+      "src": "app-icon.jpg",
+      "sizes": "600x600",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
