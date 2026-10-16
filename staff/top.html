@@ -624,7 +624,7 @@
         </section>
         <aside class="desk-lists">
           <section class="card"><div class="section-title">待機中・呼出中 <span id="deskQueueCount" class="tag"></span></div><div id="deskQueue"></div></section>
-          <section class="card"><div class="section-title">在場中・退場</div><label for="deskExitSearch">受付番号／バンド番号</label><input id="deskExitSearch" placeholder="001 / WB-00001"><div id="deskOnSite"></div></section>
+          <section class="card"><div class="section-title">在場中・退場</div><label for="deskExitSearch">受付番号／バンド番号</label><input id="deskExitSearch" placeholder="受付 001 ／ バンド 7"><div id="deskOnSite"></div></section>
           <section class="card"><div class="section-title">補助具 <span id="deskAidCount" class="tag"></span></div><div class="grid"><input id="deskLoanTicket" aria-label="追加貸出の受付番号" placeholder="受付番号"><button class="btn btn-outline" id="deskLoan">追加貸出</button></div><div id="deskAid"></div></section>
         </aside>
       </div>
@@ -916,22 +916,22 @@
       var heading=document.createElement('div');heading.className='desk-exit-soon-title';heading.textContent='退場予定が近い方（最短から'+Math.min(10,soon.length)+'人）';guide.appendChild(heading);
       soon.slice(0,10).forEach(function(p){
         var b=p.band,timing=b.overMinutes>0?'超過 '+b.overMinutes+'分':b.remainingMinutes===0?'退場予定時刻です':'残り '+b.remainingMinutes+'分';
-        var r=row('受付 '+p.ticket+' ／ '+(b.memberType==='ADULT'?'大人':b.memberType==='CHILD'?'子供':'利用者'),(b.exitScheduledLabel||'')+' 退場予定 ／ '+b.bandNo+' ／ '+timing);
+        var r=row('受付 '+p.ticket+' ／ '+(b.memberType==='ADULT'?'大人':b.memberType==='CHILD'?'子供':'利用者'),(b.exitScheduledLabel||'')+' 退場予定 ／ バンド '+bandDisplayNo_(b.bandNo)+' ／ '+timing);
         r.element.className='desk-exit-person';
         button(r.actions,b.overtimeCharge>0?'徴収確認・退場':'退場','exitWristbandAndFinalize',[b.bandNo,'',staffId],'exit:'+b.bandNo);
-        r.actions.lastElementChild.setAttribute('aria-label','受付 '+p.ticket+'、'+b.bandNo+' の退場を確認');
+        r.actions.lastElementChild.setAttribute('aria-label','受付 '+p.ticket+'、バンド '+bandDisplayNo_(b.bandNo)+' の退場を確認');
         guide.appendChild(r.element);
       });box.appendChild(guide);
     }
     snapshot.onSite.forEach(function (q) {
       var ticketMatch = !search || /^\d+$/.test(search) && Number(search) === Number(q.ticketNo);
-      var bands = q.bands.filter(function (b) { return ticketMatch || b.bandNo.toUpperCase().indexOf(search) !== -1; });
+      var bands = q.bands.filter(function (b) { return ticketMatch || bandMatchesSearch_(b.bandNo,search); });
       if (!bands.length) return;
       var r = row('受付 ' + q.ticketNo, (q.customerName || '') + ' ／ 退場予定 ' + q.exitScheduledLabel);
       button(r.actions,'未退場の全員（'+q.bands.length+'人）を退場','exitTicketAndFinalize',[q.ticketNo,staffId],'group-exit:'+q.ticketNo);
       bands.forEach(function (b) {
         var timing=document.createElement('div');timing.innerHTML=timeMeterHtml(b);r.actions.appendChild(timing);
-        button(r.actions,b.bandNo + (b.overtimeCharge>0?' ¥'+b.overtimeCharge.toLocaleString()+' 徴収・退場':' 退場'),'exitWristbandAndFinalize',[b.bandNo,'',staffId],'exit:' + b.bandNo);
+        button(r.actions,'バンド '+bandDisplayNo_(b.bandNo) + (b.overtimeCharge>0?' ¥'+b.overtimeCharge.toLocaleString()+' 徴収・退場':' 退場'),'exitWristbandAndFinalize',[b.bandNo,'',staffId],'exit:' + b.bandNo);
         if(b.overtimeCharge>0){r.actions.lastElementChild.classList.remove('btn-outline');r.actions.lastElementChild.classList.add('btn-danger');}
       });
       box.appendChild(r.element);

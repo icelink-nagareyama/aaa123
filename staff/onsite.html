@@ -6,9 +6,19 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
   <style>
   .list-row-top{flex-wrap:wrap}.all-exit-btn{white-space:normal}
+  .onsite-kpi-number{font-size:40px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}.onsite-kpi-unit{font-size:14px;font-weight:500;letter-spacing:0;margin-left:5px}
   .band-row{display:grid;grid-template-columns:minmax(140px,.7fr) minmax(220px,1fr) auto;align-items:center;gap:10px 20px;padding:10px 14px;margin-bottom:6px}
   .band-id{font-weight:700;color:var(--brand-dark);overflow-wrap:anywhere}.band-row .time-meter{width:100%;margin:0}.band-row .exit-btn{justify-self:end;font-size:12px;padding:8px 12px;min-height:36px}
   @media(max-width:1100px){.band-row{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px}.band-row .band-timing{grid-column:1 / -1;grid-row:2}.band-row .exit-btn{grid-column:2;grid-row:1}.band-row .time-meter{min-width:0}}
+  .onsite-aid-summary{margin-top:18px;padding:14px 18px;border:1px solid #c6e8f5;border-radius:10px;background:#eef8fd;color:#526c83}
+  .onsite-aid-summary-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px 22px;font-size:14px}
+  .onsite-aid-summary-row>strong{color:#126e95;font-size:14px}.onsite-aid-count{color:#126e95;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;margin:0 4px}.onsite-aid-summary small{font-size:13px}
+  .onsite-aid-summary .btn{margin-left:auto;min-height:44px}.onsite-aid-note{font-size:12px;line-height:1.6;color:#526c83;margin:8px 0 0}.onsite-aid-note:empty{display:none}
+  .onsite-aid-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:#e7f6fc;color:#0a7299;font-size:13px;font-weight:700;margin-left:12px}.onsite-aid-tag[data-state=error]{background:#fff2d6;color:#8a5800}
+  .onsite-aid-loans{margin-top:16px;padding:0 16px;border:1px solid #c6e8f5;border-radius:10px;background:#eef8fd}.onsite-aid-loans[hidden],.onsite-aid-tag[hidden]{display:none}
+  .onsite-aid-loan{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;min-height:52px;padding:12px 0}.onsite-aid-loan+.onsite-aid-loan{border-top:1px solid #cfe6f1}.onsite-aid-loan strong{font-size:16px;color:#126e95}.onsite-aid-loan-info{display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#526c83;font-size:14px}.onsite-aid-warning{padding:3px 8px;border-radius:6px;background:#fff2d6;color:#8a5800;font-size:12px;font-weight:700}
+  .onsite-aid-deadline{color:#126e95;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}.onsite-aid-remaining{color:#126e95;font-weight:700}.onsite-aid-deadline,.onsite-aid-remaining,.onsite-aid-warning{white-space:nowrap}
+  @media(max-width:600px){.onsite-aid-summary{padding:12px}.onsite-aid-summary-row{gap:10px 16px}.onsite-aid-summary .btn{margin-left:0}.onsite-aid-tag{margin:6px 0 0;display:table}.onsite-aid-loans{padding:0 12px}}
   </style>
 </head>
 <body data-layout-page="OnSite" class="layout-refresh">
@@ -46,6 +56,10 @@
           <div class="loading" id="updatedAt"></div>
         </div>
         <div class="layout-kpis mt-16"><div class="stat-card"><div class="value" id="layoutOnSitePeople">-</div><div class="label">氷上人数</div></div><div class="stat-card"><div class="value" id="totalTag">-</div><div class="label">在場組数</div></div><div class="stat-card"><div class="value" id="layoutNearExitPeople">-</div><div class="label">直近の退場予定（最大10人）</div></div></div>
+        <section class="onsite-aid-summary" aria-label="滑走補助具の貸出状況">
+          <div class="onsite-aid-summary-row"><strong>滑走補助具</strong><span>貸出中 <strong class="onsite-aid-count" id="onsiteAidInUse">—</strong><small>台</small></span><span>貸出可能 <strong class="onsite-aid-count" id="onsiteAidAvailable">—</strong><small>台</small></span><span>全<strong id="onsiteAidTotal">—</strong>台</span><a class="btn btn-outline btn-sm" id="onsiteAidManage">貸出・返却へ →</a></div>
+          <p class="onsite-aid-note" id="onsiteAidNote">貸出状況を確認しています。</p>
+        </section>
       </div>
 
       <div class="card"><div class="section-title">退場予定が近い10人</div><div id="nearExitList" style="white-space:pre-line;line-height:1.9;"></div><p class="loading">表示金額は今退場した場合の見込みです。最終料金は退場時に確定します。</p></div>
@@ -57,6 +71,42 @@
     var staffId = window.staffPortal.staffId;
     var sessionToken = window.staffPortal.sessionToken;
     var baseUrl = window.staffPortal.baseUrl;
+    var onSiteAidView=null,onSiteAidStatus='loading';
+    function onSitePageUrl_(page) {
+      var url = baseUrl + '?page=' + encodeURIComponent(page);
+      
+      return url;
+    }
+    function onSiteTicketKey_(value) {
+      var text=String(value==null?'':value).trim();return /^[0-9]+$/.test(text)?text.replace(/^0+(?=[0-9])/,''):text;
+    }
+    function renderOnSiteAid_() {
+      var ready=onSiteAidStatus==='ready'&&onSiteAidView;
+      [['onsiteAidInUse','inUse'],['onsiteAidAvailable','available'],['onsiteAidTotal','total']].forEach(function(pair){document.getElementById(pair[0]).textContent=ready?String(onSiteAidView[pair[1]]):'—';});
+      document.getElementById('onsiteAidNote').textContent=ready?'台数には入場前・退場後の未返却分も含みます。補助具の返却予定は貸出開始から1時間（お客様の退場予定とは別）です。時間表示は15秒ごとに更新します。':onSiteAidStatus==='error'?'貸出情報を取得できません。次回の更新で再確認します。':'貸出状況を確認しています。';
+      document.querySelectorAll('#list > .card').forEach(function(card){
+        var tag=card.querySelector('.onsite-aid-tag'),box=card.querySelector('.onsite-aid-loans');if(!tag||!box)return;
+        box.replaceChildren();box.hidden=true;tag.hidden=false;tag.dataset.state=onSiteAidStatus;
+        if(!ready){tag.textContent=onSiteAidStatus==='error'?'補助具：取得できません':'補助具：確認中';return;}
+        var ticket=onSiteTicketKey_(card.dataset.ticket),date=card.dataset.ticketDate;
+        var matches=onSiteAidView.active.filter(function(loan){return onSiteTicketKey_(loan.ticketNo)===ticket;});
+        if(!date||matches.some(function(loan){return !loan.startDate;})){tag.textContent='補助具：貸出情報を照合できません';tag.dataset.state='error';return;}
+        var loans=matches.filter(function(loan){return loan.startDate===date;}).slice().sort(function(a,b){return (Number(a.aidNo)||Infinity)-(Number(b.aidNo)||Infinity);});
+        if(!loans.length){tag.hidden=true;tag.textContent='';return;}
+        tag.textContent='補助具 '+loans.length+'台 貸出中';box.hidden=false;
+        loans.forEach(function(loan){
+          var row=document.createElement('div'),number=document.createElement('strong'),detail=document.createElement('div'),time=document.createElement('span');row.className='onsite-aid-loan';number.textContent='補助具 '+(Number(loan.aidNo)>0?String(loan.aidNo)+'番':'番号未割当')+'を貸出中';detail.className='onsite-aid-loan-info';
+          time.textContent=(loan.startTimeLabel||'時刻不明')+'開始 ・ 経過'+(typeof loan.elapsedMin==='number'&&Number.isFinite(loan.elapsedMin)?String(loan.elapsedMin)+'分':'不明');detail.appendChild(time);
+          var deadline=document.createElement('span');deadline.className='onsite-aid-deadline';deadline.textContent='返却予定 '+(loan.returnScheduledLabel||'未設定');detail.appendChild(deadline);
+          var timing=document.createElement('span');
+          if(typeof loan.overdueMinutes==='number'&&Number.isFinite(loan.overdueMinutes)&&loan.overdueMinutes>0){timing.className='onsite-aid-warning';timing.textContent='返却予定を'+loan.overdueMinutes+'分超過';}
+          else if(typeof loan.remainingMinutes==='number'&&Number.isFinite(loan.remainingMinutes)&&loan.returnScheduledLabel){timing.className='onsite-aid-remaining';timing.textContent=loan.remainingMinutes>0?'返却まで残り'+loan.remainingMinutes+'分':'返却予定時刻です';}
+          else{timing.className='onsite-aid-warning';timing.textContent='返却予定を確認してください';}
+          detail.appendChild(timing);
+          row.appendChild(number);row.appendChild(detail);box.appendChild(row);
+        });
+      });
+    }
 
     function showError(msg) {
       var box = document.getElementById('errorBox');
@@ -82,14 +132,17 @@
       return type === 'ADULT' ? '大人' : type === 'CHILD' ? '子供' : (type || '');
     }
 
+    function renderOnSiteKpi_(id,count,unit) {
+      var box=document.getElementById(id);box.replaceChildren();var number=document.createElement('span'),label=document.createElement('span');number.className='onsite-kpi-number';number.textContent=String(count);label.className='onsite-kpi-unit';label.textContent=unit;box.appendChild(number);box.appendChild(label);
+    }
     function render(list) {
       var savedInputs={};document.querySelectorAll('.extend-min').forEach(function(e){savedInputs[e.dataset.ticket]=e.value;});
       var upcoming=[];list.forEach(function(q){q.bands.forEach(function(w){if(w.exitScheduledAt)upcoming.push({ticket:q.ticketNo,band:w});});});
       upcoming.sort(function(a,b){return new Date(a.band.exitScheduledAt)-new Date(b.band.exitScheduledAt);});
-      document.getElementById('nearExitList').textContent=upcoming.slice(0,10).map(function(p){return '受付 '+p.ticket+'／'+p.band.bandNo+'　'+p.band.exitScheduledLabel+'　'+bandTimeLabel(p.band);}).join('\n')||'退場予定のある在場者はいません。';
-      document.getElementById('totalTag').textContent = list.length + '組';
-      document.getElementById('layoutOnSitePeople').textContent = list.reduce(function(n,q){return n+q.bands.length;},0)+'名';
-      document.getElementById('layoutNearExitPeople').textContent = Math.min(10,upcoming.length)+'名';
+      document.getElementById('nearExitList').textContent=upcoming.slice(0,10).map(function(p){return '受付 '+p.ticket+'／'+'バンド '+bandDisplayNo_(p.band.bandNo)+'　'+p.band.exitScheduledLabel+'　'+bandTimeLabel(p.band);}).join('\n')||'退場予定のある在場者はいません。';
+      renderOnSiteKpi_('totalTag',list.length,'組');
+      renderOnSiteKpi_('layoutOnSitePeople',list.reduce(function(n,q){return n+q.bands.length;},0),'名');
+      renderOnSiteKpi_('layoutNearExitPeople',Math.min(10,upcoming.length),'名');
       var box = document.getElementById('list');
       if (list.length === 0) {
         box.innerHTML = '<div class="card"><div class="empty-hint">現在、氷上にいるお客様はいません</div></div>';
@@ -101,7 +154,7 @@
         card.className = 'card';
         var bandsHtml = q.bands.map(function (w) {
           return '<div class="list-row band-row">' +
-              '<div class="band-id">' + w.bandNo + '（' + memberLabel(w.memberType) + '）</div>' +
+              '<div class="band-id">' + bandDisplayNo_(w.bandNo) + '（' + memberLabel(w.memberType) + '）</div>' +
               '<div class="band-timing">'+timeMeterHtml(w)+'</div>'+
               '<button class="btn '+(w.overtimeCharge>0?'btn-danger':'btn-outline')+' btn-sm exit-btn" data-band="' + w.bandNo + '">'+(w.overtimeCharge>0?'¥'+w.overtimeCharge.toLocaleString()+' 徴収・退場':'退場')+'</button>' +
           '</div>';
@@ -115,18 +168,21 @@
           '</div>' +
           '<div class="list-row-sub">' +
             (q.customerName ? q.customerName + '　' : '') + '在場' + q.bands.length + '名' +
-            (q.isNighter ? '　ナイター' : '') +
+            (q.isNighter ? '　ナイター' : '') + '<span class="onsite-aid-tag" hidden></span>' +
           '</div>' +
           '<div class="list-row-sub">入場：' + (q.enteredAtLabel || '-') +
             '　退場予定：' + (q.exitScheduledLabel || '-') + '</div>' +
+          '<div class="onsite-aid-loans" hidden></div>' +
           '<div class="mt-16">' + bandsHtml + '</div>' +
           '<div class="list-row-actions">' +
             '<input type="number" class="extend-min" data-ticket="' + q.ticketNo + '" placeholder="延長(分)" ' +
               'min="0" style="max-width:110px;">' +
             '<button class="btn btn-sm extend-btn" data-ticket="' + q.ticketNo + '">延長する</button>' +
           '</div>';
+        card.dataset.ticket=String(q.ticketNo);card.dataset.ticketDate=q.ticketIssuedDate||'';
         box.appendChild(card);
       });
+      renderOnSiteAid_();
 
       document.querySelectorAll('.extend-min').forEach(function(e){if(savedInputs[e.dataset.ticket]!=null)e.value=savedInputs[e.dataset.ticket];});
       document.querySelectorAll('.all-exit-btn').forEach(function(btn){btn.addEventListener('click',function(){var ticket=btn.dataset.ticket;confirmExitPayment('受付 '+ticket+' 全員',function(res){loadList();window.alert('受付 '+ticket+' 全員退場：徴収確認額 ¥'+res.charge.toLocaleString());},function(e){showError(e.message||e);},ticket);});});
@@ -148,7 +204,7 @@
       clearError();
       confirmExitPayment(bandNo,function(res){
           loadList();
-          window.alert(bandNo+' 退場確定：'+(res.charge>0?'徴収確認済み ¥'+res.charge.toLocaleString():'追加料金なし'));
+          window.alert('バンド '+bandDisplayNo_(bandNo)+' 退場確定：'+(res.charge>0?'徴収確認済み ¥'+res.charge.toLocaleString():'追加料金なし'));
       },function(err){showError(err.message||err);});
     }
 
@@ -163,6 +219,7 @@
     var onSiteVersion=0;
     function loadList() {
       var version=++onSiteVersion;
+      if(onSiteAidStatus!=='ready')onSiteAidStatus='loading';renderOnSiteAid_();
       staffRun()
         .withSuccessHandler(function (list) {
           if(version!==onSiteVersion)return;
@@ -170,9 +227,15 @@
           document.getElementById('updatedAt').textContent = '更新：' + new Date().toLocaleTimeString('ja-JP');
         })
         .withFailureHandler(function (err) {
+          if(version!==onSiteVersion)return;
           showError('一覧の取得に失敗しました：' + (err && err.message ? err.message : err));
         })
         .getOnSiteView();
+      staffRun().withSuccessHandler(function(data){
+        if(version!==onSiteVersion)return;
+        if(!data||!Array.isArray(data.active)||!['inUse','available','total'].every(function(key){return typeof data[key]==='number'&&Number.isFinite(data[key]);})){onSiteAidView=null;onSiteAidStatus='error';}
+        else{onSiteAidView=data;onSiteAidStatus='ready';}renderOnSiteAid_();
+      }).withFailureHandler(function(){if(version!==onSiteVersion)return;onSiteAidView=null;onSiteAidStatus='error';renderOnSiteAid_();}).getAidInventoryView();
     }
 
     function loadStaffLabel() {
@@ -188,6 +251,7 @@
     }
 
     renderAdminSidebar('onsite');
+    document.getElementById('onsiteAidManage').href=onSitePageUrl_('aidinventory');
     loadStaffLabel();
     loadList();
     setInterval(loadList, 15000);

@@ -19,11 +19,42 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
     meter.appendChild(track);var detail=document.createElement('div');detail.textContent='退場予定 '+(w.exitScheduledLabel||'-')+(w.overtimeCharge>0?' ／ 超過料金 ¥'+w.overtimeCharge.toLocaleString():'');meter.appendChild(detail);return meter.outerHTML;
   }
   var exitPaymentDialogs_=Object.create(null);
+  function bandDisplayNo_(value) {
+    var raw=String(value==null?'':value).trim();
+    if(/^WB-[0-9]+$/i.test(raw))raw=raw.slice(3);
+    return /^[0-9]+$/.test(raw)?raw.replace(/^0+(?=[0-9])/,''):raw;
+  }
+  function bandMatchesSearch_(value,query) {
+    var raw=String(value==null?'':value).toUpperCase(),search=String(query||'').trim().toUpperCase();
+    return /^[0-9]+$/.test(search)?bandDisplayNo_(raw)===bandDisplayNo_(search):raw.indexOf(search)!==-1;
+  }
+  function bandEndLabel_(band) {
+    if(band.exitScheduledLabel&&band.exitScheduledLabel!=='-')return String(band.exitScheduledLabel);
+    if(!band.exitScheduledAt)return '未設定';
+    var date=new Date(band.exitScheduledAt);if(!Number.isFinite(date.getTime()))return '未設定';
+    date=new Date(date.getTime()+9*60*60*1000);
+    return ('0'+date.getUTCHours()).slice(-2)+':'+('0'+date.getUTCMinutes()).slice(-2);
+  }
+  function bandIdentityHtml_(band) {
+    var box=document.createElement('div');box.className='wristband-display';
+    var number=document.createElement('div'),numberLabel=document.createElement('span'),value=document.createElement('strong');
+    numberLabel.className='wristband-display-label';numberLabel.textContent='バンド番号';value.className='wristband-number';value.textContent=bandDisplayNo_(band.bandNo);
+    number.appendChild(numberLabel);number.appendChild(value);
+    if(band.memberType){var member=document.createElement('span');member.className='wristband-member';member.textContent=band.memberType==='ADULT'?'大人':band.memberType==='CHILD'?'子供':String(band.memberType);number.appendChild(member);}
+    var end=document.createElement('div'),endLabel=document.createElement('span'),time=document.createElement('strong');
+    endLabel.className='wristband-display-label';endLabel.textContent='終了時刻';time.className='wristband-end';time.textContent=bandEndLabel_(band);
+    end.appendChild(endLabel);end.appendChild(time);box.appendChild(number);box.appendChild(end);return box.outerHTML;
+  }
+  function renderAdmissionBands_(host,result) {
+    host.replaceChildren();var title=document.createElement('div');title.textContent='受付 '+result.ticketNo+' の入場を確定しました';host.appendChild(title);
+    var grid=document.createElement('div');grid.className='admission-band-grid';
+    (result.bandNumbers||[]).forEach(function(number){var card=document.createElement('div');card.innerHTML=bandIdentityHtml_({bandNo:number,exitScheduledAt:result.exitScheduledAt});grid.appendChild(card.firstElementChild);});host.appendChild(grid);
+  }
   function confirmExitPayment(bandNo,onSuccess,onFailure,groupTicket){
     if(Object.keys(exitPaymentDialogs_).length)return;exitPaymentDialogs_[bandNo]=true;
     var exitAction=groupTicket?'exitTicketAndFinalize':'exitWristbandAndFinalize';
     var dialog=document.createElement('dialog');dialog.className='exit-payment-dialog';
-    var heading=document.createElement('h3');heading.textContent=bandNo+' の退場確認';var description=document.createElement('p');
+    var heading=document.createElement('h3');heading.textContent=(groupTicket?bandNo:'バンド '+bandDisplayNo_(bandNo))+' の退場確認';var description=document.createElement('p');
     var amount=document.createElement('div');amount.className='exit-payment-amount';
     var label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';var text=document.createElement('span');label.append(check,text);
     var error=document.createElement('p');error.className='msg-error';error.style.display='none';

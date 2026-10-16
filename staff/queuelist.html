@@ -638,7 +638,7 @@ function renderQueueRows(list,id){
 }
 function finishQueueAction(action,result,key){
  delete queuePending[key];delete queueFailed[key];clearError();
- if(action==='admitToIce'){document.getElementById('queueNotice').textContent='受付 '+result.ticketNo+' の入場を確定しました。バンド番号：'+(result.bandNumbers||[]).join('、');queueSelected=null;queueDetailGeneration++;document.getElementById('queueReview').style.display='none';document.getElementById('queueEditor').style.display='none';}
+ if(action==='admitToIce'){renderAdmissionBands_(document.getElementById('queueNotice'),result);queueSelected=null;queueDetailGeneration++;document.getElementById('queueReview').style.display='none';document.getElementById('queueEditor').style.display='none';}
  else{document.getElementById('queueNotice').textContent=action==='markConsentAsPaper'?'紙の同意書の受理を保存しました。受付・料金の確定状態を確認してください。':'操作を保存しました。';if(queueSelected)loadQueueSelected(queueSelected.ticketNo,false);}
  loadQueueList();refreshOperationBar();
 }

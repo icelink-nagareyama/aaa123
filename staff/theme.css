@@ -861,3 +861,12 @@
 .staff-install-help { margin-top:20px; padding-top:16px; border-top:1px solid var(--border); font-size:13px; line-height:1.8; color:#52657a; }
 .staff-install-help summary { min-height:44px; padding:8px 0; color:#075c7b; font-weight:600; cursor:pointer; }
 .staff-install-help ol { padding-left:22px; }
+.wristband-display { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); gap:12px 20px; align-items:center; min-width:0; padding:14px 16px; border:1px solid var(--border); border-radius:12px; background:var(--bg,#f4f7fb); color:var(--brand-dark); }
+.wristband-display > div { min-width:0; }
+.wristband-display-label { display:block; margin-bottom:5px; color:var(--text-muted,#52657a); font-size:13px; font-weight:600; line-height:1.4; }
+.wristband-number,.wristband-end { display:block; font-size:clamp(32px,3.2vw,44px); font-weight:800; line-height:1.15; letter-spacing:-.025em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.wristband-member { display:block; margin-top:4px; font-size:14px; font-weight:600; }
+.admission-band-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:16px; margin-top:12px; }
+.admission-band-grid .wristband-display { padding:20px; background:#edf8fd; border-color:#9ed6e9; }
+.admission-band-grid .wristband-number,.admission-band-grid .wristband-end { font-size:clamp(36px,4.5vw,64px); }
+@media(max-width:600px) { .admission-band-grid .wristband-display { gap:12px; padding:16px; } }
