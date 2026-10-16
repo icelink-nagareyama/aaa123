@@ -17,6 +17,7 @@
   .onsite-aid-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:#e7f6fc;color:#0a7299;font-size:13px;font-weight:700;margin-left:12px}.onsite-aid-tag[data-state=error]{background:#fff2d6;color:#8a5800}
   .onsite-aid-loans{margin-top:16px;padding:0 16px;border:1px solid #c6e8f5;border-radius:10px;background:#eef8fd}.onsite-aid-loans[hidden],.onsite-aid-tag[hidden]{display:none}
   .onsite-aid-loan{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;min-height:52px;padding:12px 0}.onsite-aid-loan+.onsite-aid-loan{border-top:1px solid #cfe6f1}.onsite-aid-loan strong{font-size:16px;color:#126e95}.onsite-aid-loan-info{display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#526c83;font-size:14px}.onsite-aid-warning{padding:3px 8px;border-radius:6px;background:#fff2d6;color:#8a5800;font-size:12px;font-weight:700}
+  .onsite-aid-return{min-height:44px;min-width:88px;white-space:nowrap}.onsite-aid-loan-info{flex:1;justify-content:flex-end}
   .onsite-aid-deadline{color:#126e95;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}.onsite-aid-remaining{color:#126e95;font-weight:700}.onsite-aid-deadline,.onsite-aid-remaining,.onsite-aid-warning{white-space:nowrap}
   @media(max-width:600px){.onsite-aid-summary{padding:12px}.onsite-aid-summary-row{gap:10px 16px}.onsite-aid-summary .btn{margin-left:0}.onsite-aid-tag{margin:6px 0 0;display:table}.onsite-aid-loans{padding:0 12px}}
   </style>
@@ -71,7 +72,7 @@
     var staffId = window.staffPortal.staffId;
     var sessionToken = window.staffPortal.sessionToken;
     var baseUrl = window.staffPortal.baseUrl;
-    var onSiteAidView=null,onSiteAidStatus='loading';
+    var onSiteAidView=null,onSiteAidStatus='loading',onSiteAidReturns=Object.create(null);
     function onSitePageUrl_(page) {
       var url = baseUrl + '?page=' + encodeURIComponent(page);
       
@@ -103,9 +104,24 @@
           else if(typeof loan.remainingMinutes==='number'&&Number.isFinite(loan.remainingMinutes)&&loan.returnScheduledLabel){timing.className='onsite-aid-remaining';timing.textContent=loan.remainingMinutes>0?'返却まで残り'+loan.remainingMinutes+'分':'返却予定時刻です';}
           else{timing.className='onsite-aid-warning';timing.textContent='返却予定を確認してください';}
           detail.appendChild(timing);
-          row.appendChild(number);row.appendChild(detail);box.appendChild(row);
+          var button=document.createElement('button'),state=onSiteAidReturns[loan.logId];button.type='button';button.className='btn btn-outline btn-sm onsite-aid-return';button.dataset.log=loan.logId||'';
+          button.textContent=state&&state.done?'返却済み':state&&state.busy?'返却中…':state?'返却を再確認':'返却';button.disabled=!loan.logId||!!(state&&(state.busy||state.done));
+          button.setAttribute('aria-label','受付 '+card.dataset.ticket+' の補助具 '+(loan.aidNo||'番号未割当')+' を'+button.textContent);
+          button.addEventListener('click',function(){returnOnSiteAid_(loan,card.dataset.ticket);});
+          row.appendChild(number);row.appendChild(detail);row.appendChild(button);box.appendChild(row);
         });
       });
+    }
+
+    function returnOnSiteAid_(loan,ticketNo) {
+      var id=loan.logId,state=onSiteAidReturns[id];if(!id||(state&&(state.busy||state.done)))return;
+      if(!window.confirm('受付 '+ticketNo+' の補助具 '+(loan.aidNo||'番号未割当')+'番を返却します。実物を受け取りましたか？'+(state?' 前回と同じ操作番号で結果を再確認します。':'')))return;
+      clearError();if(!state)state=onSiteAidReturns[id]={operation:makeStaffOperation_()};state.busy=true;renderOnSiteAid_();
+      function done(fee){state.busy=false;state.done=true;renderOnSiteAid_();loadList();window.alert('補助具 '+(loan.aidNo||'番号未割当')+'番を返却しました。返却時の追加料金：¥'+Number(fee).toLocaleString());}
+      function failed(err){state.busy=false;renderOnSiteAid_();showError('返却結果を確認できません：'+(err&&err.message?err.message:err)+'。最新の貸出状況を確認し、必要な場合は「返却を再確認」を押してください。');loadList();}
+      staffRun(state.operation).withSuccessHandler(done).withFailureHandler(function(err){
+        staffRun().withSuccessHandler(function(status){if(status&&status.state==='DONE')done(status.result);else failed(err);}).withFailureHandler(function(){failed(err);}).getStaffMutationStatus(state.operation.requestId);
+      }).returnAidRentalForGuest(id);
     }
 
     function showError(msg) {
