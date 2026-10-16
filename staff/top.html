@@ -625,7 +625,7 @@
         <aside class="desk-lists">
           <section class="card"><div class="section-title">待機中・呼出中 <span id="deskQueueCount" class="tag"></span></div><div id="deskQueue"></div></section>
           <section class="card"><div class="section-title">在場中・退場</div><label for="deskExitSearch">受付番号／バンド番号</label><input id="deskExitSearch" placeholder="受付 001 ／ バンド 7"><div id="deskOnSite"></div></section>
-          <section class="card"><div class="section-title">補助具 <span id="deskAidCount" class="tag"></span></div><div class="grid"><input id="deskLoanTicket" aria-label="追加貸出の受付番号" placeholder="受付番号"><button class="btn btn-outline" id="deskLoan">追加貸出</button></div><div id="deskAid"></div></section>
+          <section class="card"><div class="section-title">補助具 <span id="deskAidCount" class="tag"></span></div><div class="grid"><input id="deskLoanTicket" aria-label="追加貸出の受付番号" placeholder="受付番号"><label for="deskLoanCount">貸出台数<input id="deskLoanCount" type="number" value="1" min="1" step="1" inputmode="numeric" style="min-height:44px" aria-describedby="deskLoanHint"></label><button class="btn btn-outline" id="deskLoan">追加貸出</button><small id="deskLoanHint">空き台数を確認しています。</small></div><div id="deskAid"></div></section>
         </aside>
       </div>
 
@@ -824,20 +824,11 @@
 
     var dashboardVersion = 0;
     function loadDashboard() {
-      var version = ++dashboardVersion;
-      staffRun()
-        .withSuccessHandler(function (layout) {
-          staffRun()
-            .withSuccessHandler(function (stats) { if (version === dashboardVersion) renderStats(layout, stats); })
-            .withFailureHandler(function (err) {
-              showError('ダッシュボードの値取得に失敗しました：' + (err && err.message ? err.message : err));
-            })
-            .getDashboardStats();
-        })
-        .withFailureHandler(function (err) {
-          showError('ダッシュボードレイアウトの取得に失敗しました：' + (err && err.message ? err.message : err));
-        })
-        .getDashboardLayout();
+      var version=++dashboardVersion,layout,stats,hasLayout=false,hasStats=false;
+      function paint(){if(version===dashboardVersion&&hasLayout&&hasStats)renderStats(layout,stats);}
+      function failed(err){if(version===dashboardVersion)showError('ダッシュボードの取得に失敗しました：'+(err&&err.message?err.message:err));}
+      staffRun().withSuccessHandler(function(value){layout=value;hasLayout=true;paint();}).withFailureHandler(failed).getDashboardLayout();
+      staffRun().withSuccessHandler(function(value){stats=value;hasStats=true;paint();}).withFailureHandler(failed).getDashboardStats();
     }
 
     function loadStaffLabel() {
@@ -876,7 +867,7 @@
 </style>
 <script>
 (function () {
-  var generation = 0, snapshot = null, pending = Object.create(null), failed = Object.create(null);
+  var generation = 0, snapshot = null, pending = Object.create(null), failed = Object.create(null), loanRequest = null;
   var notice = document.getElementById('deskNotice');
   function row(title, detail) {
     var element = document.createElement('div'); element.className = 'list-row';
@@ -939,6 +930,11 @@
     if (!box.children.length) box.textContent = search ? '該当する在場者がいません。' : '在場中のお客様はいません。';
     var aid = document.getElementById('deskAid'); aid.replaceChildren();
     document.getElementById('deskAidCount').textContent = '空き' + snapshot.aid.available + '／全' + snapshot.aid.total + '台';
+    var qty=document.getElementById('deskLoanCount'),loanBusy=loanRequest&&pending[loanRequest.key],loanRecovery=loanRequest&&failed[loanRequest.key];
+    qty.max=String(Math.max(0,snapshot.aid.available));qty.disabled=!!(loanBusy||loanRecovery);document.getElementById('deskLoanTicket').disabled=!!(loanBusy||loanRecovery);
+    document.getElementById('deskLoan').disabled=!!loanBusy||(!loanRecovery&&snapshot.aid.available<1);
+    document.getElementById('deskLoan').textContent=loanBusy?'貸出中…':loanRecovery?'保存状態を確認':'追加貸出';
+    document.getElementById('deskLoanHint').textContent='現在 '+snapshot.aid.available+'台まで貸出可能';
     snapshot.aid.active.forEach(function (a) {
       var r = row('補助具 ' + (a.aidNo || '未割当') + ' ／受付 ' + a.ticketNo, a.startTimeLabel + '開始・' + a.elapsedMin + '分');
       button(r.actions,'返却','returnAidRentalForGuest',[a.logId],'return:' + a.logId); aid.appendChild(r.element);
@@ -962,14 +958,14 @@
     if(action==='exitWristbandAndFinalize'){confirmExitPayment(args[0],function(result){notice.textContent='退場確定：徴収確認額 ¥'+result.charge.toLocaleString();refresh();refreshOperationBar();},function(e){notice.textContent=e.message||e;});return;}
     if (pending[key]) return;
     if (failed[key]) { check(action,args,key,true); return; }
-    if (!window.confirm('対象を確認して操作を確定します。よろしいですか？')) return;
+    if (!window.confirm(action==='addAidRentalForGuest'?'受付 '+args[0]+' に補助具 '+args[3]+'台を貸し出します。よろしいですか？':'対象を確認して操作を確定します。よろしいですか？')) return;
     var operation = makeStaffOperation_(); pending[key] = operation; generation++; render();
     execute(action,args,key,operation);
   }
   function execute(action,args,key,operation) {
     var runner = staffRun(operation).withSuccessHandler(function (result) {
-      delete pending[key]; delete failed[key];
-      notice.textContent = '保存しました。' + (result && result.aidNo ? '貸し出す補助具番号：' + result.aidNo : '') +
+      delete pending[key]; delete failed[key]; if(action==='addAidRentalForGuest')loanRequest=null;
+      notice.textContent = '保存しました。' + (result && result.aidNos ? '貸し出す補助具番号：' + result.aidNos.join('番・')+'番（'+result.count+'台）' : result && result.aidNo ? '貸し出す補助具番号：'+result.aidNo+'番' : '') +
         (typeof result === 'number' ? ' 追加料金 ¥' + result.toLocaleString() : '') +
         (result && typeof result.charge === 'number' ? ' 追加料金 ¥' + result.charge.toLocaleString() : '');
       refresh(); refreshOperationBar();
@@ -983,8 +979,8 @@
   function check(action,args,key,retry) {
     var operation = failed[key]; if (!operation) return;
     staffRun().withSuccessHandler(function (s) {
-      if (s.state === 'DONE') { delete failed[key]; notice.textContent = '保存済みを確認しました。'; refresh(); refreshOperationBar(); }
-      else if (s.state === 'REJECTED') { delete failed[key]; notice.textContent = s.message + ' 最新一覧を確認してください。'; refresh(); }
+      if (s.state === 'DONE') { delete failed[key]; if(action==='addAidRentalForGuest')loanRequest=null; notice.textContent = '保存済みを確認しました。'+(s.result&&s.result.aidNos?' 貸し出す補助具番号：'+s.result.aidNos.join('番・')+'番':''); refresh(); refreshOperationBar(); }
+      else if (s.state === 'REJECTED') { delete failed[key]; if(action==='addAidRentalForGuest')loanRequest=null; notice.textContent = s.message + ' 最新一覧を確認してください。'; refresh(); }
       else if (s.state === 'NOT_FOUND') {
         notice.textContent = 'まだ保存記録がありません。次の操作で同じ操作番号を再送します。';
         if (retry && window.confirm('保存記録がありません。同じ操作番号で再送しますか？')) {
@@ -995,10 +991,16 @@
   }
   document.getElementById('deskExitSearch').addEventListener('input', render);
   document.getElementById('deskLoan').addEventListener('click', function () {
+    if(loanRequest&&(pending[loanRequest.key]||failed[loanRequest.key])){operate('addAidRentalForGuest',loanRequest.args,loanRequest.key);return;}
     var ticket = document.getElementById('deskLoanTicket').value.trim();
     if (/^\d+$/.test(ticket)) ticket = String(Number(ticket)).padStart(3,'0');
     if (!ticket) { notice.textContent = '受付番号を入力してください。'; return; }
-    operate('addAidRentalForGuest',[ticket,'',staffId],'loan:' + ticket);
+    var quantity=Number(document.getElementById('deskLoanCount').value);
+    if(!Number.isInteger(quantity)||quantity<1){notice.textContent='貸出台数は1以上の整数で入力してください。';return;}
+    if(!snapshot||quantity>snapshot.aid.available){notice.textContent='空き台数を確認し、貸出可能な台数を指定してください。';return;}
+    loanRequest={key:'loan:'+ticket,args:[ticket,'',staffId,quantity]};
+    operate('addAidRentalForGuest',loanRequest.args,loanRequest.key);
+    if(!pending[loanRequest&&loanRequest.key]&&!failed[loanRequest&&loanRequest.key])loanRequest=null;
   });
   document.getElementById('deskFind').addEventListener('click', function () {
     if (receptionSubmitting || (receptionOperation && document.getElementById('receptionRecovery').style.display !== 'none')) { notice.textContent='先に受付の保存状態を確認してください。'; return; }

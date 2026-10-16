@@ -84,7 +84,7 @@
                 <input type="text" id="startBandNo" placeholder="例：B001">
               </div>
             </div>
-            <button class="btn" id="startBtn" style="width:100%;">貸出を開始する</button>
+            <div class="field"><label for="startAidCount">貸出台数</label><input type="number" id="startAidCount" value="1" min="1" step="1" inputmode="numeric" aria-describedby="startAidHint" style="min-height:44px"><small id="startAidHint">空き台数を確認しています。</small></div><button class="btn" id="startBtn" style="width:100%;">貸出を開始する</button>
           </div>
         </div>
 
@@ -109,6 +109,7 @@
     var sessionToken = window.staffPortal.sessionToken;
     var baseUrl = window.staffPortal.baseUrl;
 
+    var aidLoanRequest=null,aidAvailable=null;
     function showError(msg) {
       var box = document.getElementById('errorBox');
       box.textContent = msg;
@@ -119,6 +120,7 @@
     }
 
     function renderInventory(v) {
+      aidAvailable=v.available;updateAidLoanControls_();
       document.getElementById('totalCount').textContent = v.total;
       document.getElementById('inUseCount').textContent = v.inUse;
       document.getElementById('availableCount').textContent = v.available;
@@ -177,29 +179,45 @@
         .returnAidRentalForGuest(logId);
     }
 
-    document.getElementById('startBtn').addEventListener('click', function () {
+    function updateAidLoanControls_(){
+      var busy=aidLoanRequest&&aidLoanRequest.busy,recovery=aidLoanRequest&&aidLoanRequest.recovery;
+      ['startTicketNo','startBandNo','startAidCount'].forEach(function(id){document.getElementById(id).disabled=!!(busy||recovery);});
+      var quantity=document.getElementById('startAidCount');if(aidAvailable!==null)quantity.max=String(Math.max(0,aidAvailable));
+      document.getElementById('startAidHint').textContent=aidAvailable===null?'空き台数を確認しています。':'現在 '+aidAvailable+'台まで貸出可能';
+      var button=document.getElementById('startBtn');button.disabled=!!busy||(!recovery&&(aidAvailable===null||aidAvailable<1));button.textContent=busy?'貸出中…':recovery?'保存状態を確認・再送':'貸出を開始する';
+    }
+    function completeAidLoan_(result){
       clearError();
-      var ticketNo = document.getElementById('startTicketNo').value.trim();
-      var bandNo = document.getElementById('startBandNo').value.trim();
-      if (!ticketNo) {
-        showError('受付番号を入力してください');
-        return;
-      }
-      document.getElementById('startBtn').disabled = true;
-      staffRun()
-        .withSuccessHandler(function (result) {
-          window.alert('補助具 ' + result.aidNo + ' 番を貸し出してください。');
-          document.getElementById('startBtn').disabled = false;
-          document.getElementById('startTicketNo').value = '';
-          document.getElementById('startBandNo').value = '';
-          loadInventory();
-        })
-        .withFailureHandler(function (err) {
-          document.getElementById('startBtn').disabled = false;
-          showError((err && err.message ? err.message : err));
-        })
-        .addAidRentalForGuest(ticketNo, bandNo, staffId);
+      var numbers=result.aidNos||[result.aidNo];aidLoanRequest=null;updateAidLoanControls_();
+      document.getElementById('startTicketNo').value='';document.getElementById('startBandNo').value='';document.getElementById('startAidCount').value='1';
+      window.alert('補助具 '+numbers.join('番・')+'番（'+numbers.length+'台）を貸し出してください。');loadInventory();
+    }
+    function sendAidLoan_(){
+      var request=aidLoanRequest;if(!request||request.busy)return;request.busy=true;updateAidLoanControls_();
+      var runner=staffRun(request.operation).withSuccessHandler(completeAidLoan_).withFailureHandler(function(err){request.busy=false;request.recovery=true;updateAidLoanControls_();showError((err&&err.message?err.message:err)+' 保存状態を確認してください。');checkAidLoan_(false);});
+      runner.addAidRentalForGuest.apply(null,request.args);
+    }
+    function checkAidLoan_(retry){
+      var request=aidLoanRequest;if(!request||request.busy)return;request.busy=true;updateAidLoanControls_();
+      staffRun().withSuccessHandler(function(status){
+        request.busy=false;
+        if(status.state==='DONE'){completeAidLoan_(status.result);return;}
+        if(status.state==='REJECTED'){aidLoanRequest=null;updateAidLoanControls_();showError(status.message||'貸出できませんでした。');loadInventory();return;}
+        request.recovery=true;updateAidLoanControls_();
+        if(status.state==='NOT_FOUND'){showError('保存記録がありません。同じ内容・操作番号で再送できます。');if(retry&&window.confirm('受付 '+request.args[0]+' に補助具 '+request.args[3]+'台を、同じ操作番号で再送しますか？'))sendAidLoan_();}
+        else showError('保存成否が不明／途中保存です。再貸出せず、管理者に記録を確認してください。');
+      }).withFailureHandler(function(){request.busy=false;request.recovery=true;updateAidLoanControls_();showError('保存状態を確認できません。接続回復後に保存状態を確認してください。');}).getStaffMutationStatus(request.operation.requestId);
+    }
+    document.getElementById('startBtn').addEventListener('click',function(){
+      if(aidLoanRequest){checkAidLoan_(true);return;}
+      clearError();var ticket=document.getElementById('startTicketNo').value.trim(),band=document.getElementById('startBandNo').value.trim(),count=Number(document.getElementById('startAidCount').value);
+      if(!ticket){showError('受付番号を入力してください');return;}
+      if(!Number.isInteger(count)||count<1){showError('貸出台数は1以上の整数で入力してください。');return;}
+      if(aidAvailable===null||count>aidAvailable){showError('空き台数を確認し、貸出可能な台数を指定してください。');return;}
+      if(!window.confirm('受付 '+ticket+' に補助具 '+count+'台を貸し出します。よろしいですか？'))return;
+      aidLoanRequest={operation:makeStaffOperation_(),args:[ticket,band,staffId,count],busy:false,recovery:false};sendAidLoan_();
     });
+    updateAidLoanControls_();
 
     document.getElementById('saveStockTotalBtn').addEventListener('click', function () {
       clearError();

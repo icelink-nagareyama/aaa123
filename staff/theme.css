@@ -334,6 +334,20 @@
   .layout-refresh #selectedPassList, .layout-refresh #feeBreakdown { font-size:14px; }
   .layout-refresh input:not([type=checkbox]):not([type=hidden]), .layout-refresh select { min-height:48px; font-size:16px; }
   .layout-refresh .stepper-input { font-size:21px!important; }
+  /* Safari native date/time controls must stay within their grid column. */
+  .layout-refresh .field { min-width:0; }
+  .layout-refresh input[type=date], .layout-refresh input[type=time], .layout-refresh input[type=datetime-local] {
+    display:block; -webkit-appearance:none; appearance:none; box-sizing:border-box;
+    width:100%; min-width:0; max-width:100%; height:48px; min-height:48px;
+    padding:10px; line-height:normal;
+  }
+  .layout-refresh input[type=date]::-webkit-date-and-time-value,
+  .layout-refresh input[type=time]::-webkit-date-and-time-value,
+  .layout-refresh input[type=datetime-local]::-webkit-date-and-time-value { min-width:0; margin:0; padding:0; text-align:left; }
+  .layout-refresh input[type=date]::-webkit-datetime-edit,
+  .layout-refresh input[type=time]::-webkit-datetime-edit,
+  .layout-refresh input[type=datetime-local]::-webkit-datetime-edit { min-width:0; padding:0; }
+
   .layout-refresh .btn-outline { background:white; }
   .layout-refresh .btn-outline:hover { background:#eaf6fb; }
   .layout-refresh .reception-people { grid-template-columns:repeat(2,minmax(0,1fr)); }
