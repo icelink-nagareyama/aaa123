@@ -5,7 +5,7 @@
   <base target="_top">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
 
-</head>
+<style>.desk-loan-form{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:12px;align-items:end}.desk-loan-form .field{margin:0;min-width:0}.desk-loan-form #deskLoanCount{text-align:center;font-variant-numeric:tabular-nums}.desk-loan-form #deskLoan,.desk-loan-form #deskLoanHint{grid-column:1 / -1}.desk-loan-form #deskLoan{width:100%}</style></head>
 <body data-layout-page="Top" class="layout-refresh layout-dashboard">
   <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
   <div class="operation-bar-items">
@@ -625,7 +625,7 @@
         <aside class="desk-lists">
           <section class="card"><div class="section-title">待機中・呼出中 <span id="deskQueueCount" class="tag"></span></div><div id="deskQueue"></div></section>
           <section class="card"><div class="section-title">在場中・退場</div><label for="deskExitSearch">受付番号／バンド番号</label><input id="deskExitSearch" placeholder="受付 001 ／ バンド 7"><div id="deskOnSite"></div></section>
-          <section class="card"><div class="section-title">補助具 <span id="deskAidCount" class="tag"></span></div><div class="grid"><input id="deskLoanTicket" aria-label="追加貸出の受付番号" placeholder="受付番号"><label for="deskLoanCount">貸出台数<input id="deskLoanCount" type="number" value="1" min="1" step="1" inputmode="numeric" style="min-height:44px" aria-describedby="deskLoanHint"></label><button class="btn btn-outline" id="deskLoan">追加貸出</button><small id="deskLoanHint">空き台数を確認しています。</small></div><div id="deskAid"></div></section>
+          <section class="card"><div class="section-title">補助具 <span id="deskAidCount" class="tag"></span></div><div class="desk-loan-form"><div class="field"><label for="deskLoanTicket">受付番号</label><input id="deskLoanTicket" placeholder="受付番号"></div><div class="field"><label for="deskLoanCount">貸出台数</label><input id="deskLoanCount" type="number" value="1" min="1" step="1" inputmode="numeric" aria-describedby="deskLoanHint"></div><button class="btn btn-outline" id="deskLoan">追加貸出</button><small id="deskLoanHint">空き台数を確認しています。</small></div><div id="deskAid"></div></section>
         </aside>
       </div>
 

@@ -4,6 +4,13 @@
   <meta name="referrer" content="no-referrer">
   <base target="_top">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="theme.css"><script src="common.js"></script>
+
+  <style>
+    .aid-loan-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 96px minmax(180px,1.15fr);align-items:end;gap:16px}
+    .aid-loan-fields .field{margin:0;min-width:0}.aid-loan-fields input{min-height:48px}.aid-loan-quantity input{text-align:center;font-variant-numeric:tabular-nums}
+    .aid-loan-fields #startBtn{width:100%;min-height:48px}.aid-loan-hint{display:block;margin-top:10px;color:var(--text-sub);font-size:13px}
+    @media(max-width:700px){.aid-loan-fields{grid-template-columns:88px minmax(0,1fr);gap:12px}.aid-loan-ticket,.aid-loan-band{grid-column:1 / -1}}
+  </style>
 </head>
 <body data-layout-page="AidInventory" class="layout-refresh">
   <section id="operationBar" class="operation-bar" aria-label="本日の運営情報">
@@ -71,21 +78,17 @@
             <div id="activeList"></div>
           </div>
 
-          <!-- 貸出開始 -->
-          <div class="card">
-            <div class="section-title">貸出を開始する</div>
-            <div class="grid" style="grid-template-columns: 1fr 1fr;">
-              <div class="field">
-                <label>受付番号</label>
-                <input type="text" id="startTicketNo" placeholder="例：001">
-              </div>
-              <div class="field">
-                <label>バンド番号（任意）</label>
-                <input type="text" id="startBandNo" placeholder="例：B001">
-              </div>
+          <!-- 貸出開始：表示時に一覧の上へ移動 -->
+          <section class="card aid-loan-form" aria-labelledby="aidLoanTitle">
+            <div class="section-title" id="aidLoanTitle">貸出を開始する</div>
+            <div class="aid-loan-fields">
+              <div class="field aid-loan-ticket"><label for="startTicketNo">受付番号</label><input type="text" id="startTicketNo" placeholder="例：001"></div>
+              <div class="field aid-loan-band"><label for="startBandNo">バンド番号（任意）</label><input type="text" id="startBandNo" placeholder="例：B001"></div>
+              <div class="field aid-loan-quantity"><label for="startAidCount">貸出台数</label><input type="number" id="startAidCount" value="1" min="1" step="1" inputmode="numeric" aria-describedby="startAidHint"></div>
+              <button class="btn" id="startBtn">貸出を開始する</button>
             </div>
-            <div class="field"><label for="startAidCount">貸出台数</label><input type="number" id="startAidCount" value="1" min="1" step="1" inputmode="numeric" aria-describedby="startAidHint" style="min-height:44px"><small id="startAidHint">空き台数を確認しています。</small></div><button class="btn" id="startBtn" style="width:100%;">貸出を開始する</button>
-          </div>
+            <small class="aid-loan-hint" id="startAidHint">空き台数を確認しています。</small>
+          </section>
         </div>
 
         <div class="two-col-side">

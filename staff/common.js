@@ -332,7 +332,7 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
     if(page==='QueueList')columns([card('calledList'),card('waitingList')],'layout-queue-columns');
     if(page==='AidInventory'){
       var start=card('startBtn'),stock=card('saveStockTotalBtn'),active=card('activeList');
-      if(start&&stock)stock.before(start);
+      if(start&&active){var aidColumns=active.closest('.two-col');if(aidColumns)aidColumns.before(start);}
       if(active){active.parentElement.classList.add('layout-aid-active');}
     }
     if(page==='Consent'){search('searchTicketNo','searchBtn');columns([card('searchBtn'),card('list')]);}
