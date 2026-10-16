@@ -197,6 +197,13 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
   var operationBarTimer_ = null;
   var operationBarLoading_ = false;
   var operationBarVersion_ = 0;
+  var operationBarDaily_=null,operationBarForceDaily_=false;
+  var operationBarDailyStorageKey_='icepark.operationHeaderDaily.v1';
+  try {
+    var savedDaily=JSON.parse(sessionStorage.getItem(operationBarDailyStorageKey_)||'null');
+    if(savedDaily&&typeof savedDaily.key==='string'&&typeof savedDaily.operationMethodLabel==='string'&&typeof savedDaily.openTimeLabel==='string'&&typeof savedDaily.closeTimeLabel==='string'&&typeof savedDaily.isClosed==='boolean')operationBarDaily_=savedDaily;
+  } catch(error) {}
+
 
   function initializeOperationModeHelp_(){
     var trigger=document.getElementById('operationModeTrigger'),panel=document.getElementById('operationModeHelp');if(!trigger||!panel||trigger.dataset.modeHelpReady)return;trigger.dataset.modeHelpReady='true';var pinned=false,timer=null;
@@ -263,15 +270,24 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
     progress.setAttribute('aria-valuetext', count === null ? '人数を取得できません' : capacity === null ? count + '人、定員未設定' : count + '人 / 定員' + capacity + '人');
   }
 
-  function refreshOperationBar() {
+  function refreshOperationBar(forceDaily) {
+    if(forceDaily===true)operationBarForceDaily_=true;
     if (operationBarLoading_) { operationBarVersion_++; return; }
     var version = ++operationBarVersion_;
     operationBarLoading_ = true;
     var meta = document.getElementById('operationBarMeta');
+    var knownDailyKey=operationBarForceDaily_?'':operationBarDaily_&&operationBarDaily_.key||'';operationBarForceDaily_=false;
     staffRun()
       .withSuccessHandler(function (info) {
         operationBarLoading_ = false;
         if (version !== operationBarVersion_) { refreshOperationBar(); return; }
+        if(typeof info.operationMethodLabel==='string'&&typeof info.openTimeLabel==='string'&&typeof info.closeTimeLabel==='string'&&typeof info.isClosed==='boolean'&&typeof info.dailyKey==='string'){
+          operationBarDaily_={key:info.dailyKey,operationMethodLabel:info.operationMethodLabel,openTimeLabel:info.openTimeLabel,closeTimeLabel:info.closeTimeLabel,isClosed:info.isClosed};
+          try{sessionStorage.setItem(operationBarDailyStorageKey_,JSON.stringify(operationBarDaily_));}catch(error){}
+        }
+        if(!operationBarDaily_||operationBarDaily_.key!==info.dailyKey){operationBarLoading_=false;if(knownDailyKey){refreshOperationBar(true);return;}meta.className='operation-bar-meta is-error';meta.textContent='当日の運営方法・営業時間を取得できませんでした。次回更新で再確認します。';updateOperationBarOccupancy(null);return;}
+        info=Object.assign({},operationBarDaily_,info);
+        if(operationBarDaily_.isClosed)info.operationStatusLabel='本日休業';
         var modes = { SELF_ENTRY: 'セルフ入場', AUTO_CALL: '自動呼出', MANUAL_CALL: '手動呼出' };
         document.getElementById('operationBarStatus').textContent = info.operationMethodLabel || '未設定';
         document.getElementById('operationBarHours').textContent = info.operationStatusLabel === '本日休業'
@@ -295,7 +311,7 @@ var logoTemplate=document.createElement("template");logoTemplate.id="appLogoTemp
         document.querySelectorAll('.operation-bar-value').forEach(function (el) {
           if (el.textContent === '読み込み中…') el.textContent = '取得できません';
         });
-      }).getTopHeaderInfo();
+      }).getTopHeaderInfo(knownDailyKey);
   }
 
 

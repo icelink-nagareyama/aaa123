@@ -145,7 +145,7 @@
           saveBtn.addEventListener('click', function () {
             clearError();
             staffRun()
-              .withSuccessHandler(function () { window.alert(s.label + ' を更新しました。'); })
+              .withSuccessHandler(function () { refreshOperationBar(true); window.alert(s.label + ' を更新しました。'); })
               .withFailureHandler(function (err) { showError((err && err.message ? err.message : err)); })
               .updateSettingValueApi(s.key, input.value, staffId);
           });
