@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>マイパス | エキサイティングアイスパークin流山</title>
+<title>保有パス | エキサイティングアイスパークin流山</title>
 
 <style>
   :root {
@@ -144,17 +144,86 @@
 #paCompareNote { font-size:13px; line-height:1.8; }
 @media(max-width:760px) { .pa-plan-grid { grid-template-columns:minmax(0,1fr); } }
 #customerPortal.pa-application { max-width:1080px; }
+
+/* owned-pass-design-v1: scoped to the authenticated owned-pass view. */
+.owned-pass-wrap { --mp-ink:#061b2c; --mp-muted:#455a69; --mp-gold:#ac7a2a; max-width:480px; padding:24px 18px 40px; color:var(--mp-ink); }
+.owned-pass-wrap > .header { display:flex; flex-direction:column; gap:18px; margin-bottom:24px; }
+.owned-pass-wrap > .header h1 { order:-1; font-size:20px; font-weight:600; color:var(--mp-ink); margin:0; }
+.owned-pass-wrap > .header .logo { font:600 16px/1.7 Georgia,'Yu Mincho',serif; letter-spacing:.2em; color:var(--mp-ink); }
+.owned-pass-wrap > .header .logo small { display:block; font-size:10px; letter-spacing:.35em; }
+.owned-pass-wrap > .header .badge-premium { display:none; }
+.owned-pass-wrap .pass-card { --pass-ink:#062136; --pass-border:#b38b45; --pass-surface:#edf8ff; --pass-soft:#244f68; position:relative; isolation:isolate; overflow:hidden; padding:0; border:1px solid var(--pass-border); border-radius:24px; background:var(--pass-surface); color:var(--pass-ink); box-shadow:0 14px 40px #123d5710; margin-bottom:24px; }
+.owned-pass-wrap .pass-card.mp-weekday { background:radial-gradient(ellipse at 20% 10%,#fff 0,transparent 55%),linear-gradient(150deg,#eaf8ff,#cbe9f9 75%,#e4f6ff); }
+.owned-pass-wrap .mp-hero { position:relative; text-align:center; padding:28px 20px 0; }
+.owned-pass-wrap .mp-kicker { font:13px/1.6 Georgia,serif; letter-spacing:.24em; margin:0 0 12px; }
+.owned-pass-wrap .mp-title { font-family:Georgia,'Yu Mincho','Hiragino Mincho ProN',serif; font-size:clamp(26px,7.5vw,36px); line-height:1.4; margin:0; font-weight:600; overflow-wrap:anywhere; }
+.owned-pass-wrap .mp-calendar { display:block; width:64px; height:64px; margin:0 auto 20px; color:#0d4762; }
+.owned-pass-wrap .mp-state { display:inline-block; max-width:100%; margin:18px 0 0; padding:6px 20px; border-radius:99px; border:1px solid #a77329; background:linear-gradient(110deg,#fff0c9,#e5bb6b,#ffedb5); color:#2e210c; font-size:15px; font-weight:700; overflow-wrap:anywhere; }
+.owned-pass-wrap .mp-scenery { display:block; width:100%; height:155px; margin-top:10px; color:#4f9bbf; }
+.owned-pass-wrap .mp-info { margin:0 20px; padding:22px 0; border-top:1px solid var(--pass-border); }
+.owned-pass-wrap .mp-info dl { display:grid; grid-template-columns:5em minmax(0,1fr); gap:14px 12px; margin:0; align-items:baseline; }
+.owned-pass-wrap .mp-info dt { font-size:14px; line-height:1.7; }
+.owned-pass-wrap .mp-info dd { margin:0; font-family:Georgia,'Yu Mincho',serif; font-size:21px; line-height:1.5; font-weight:600; overflow-wrap:anywhere; }
+.owned-pass-wrap .mp-meta { font-size:13px; color:var(--pass-soft); line-height:1.8; overflow-wrap:anywhere; margin:16px 0 0; }
+.owned-pass-wrap .mp-rule-wrap { margin:0 20px 20px; }
+.owned-pass-wrap .pass-rules { color:var(--pass-ink); border-color:var(--pass-border); margin:0; padding-top:0; border-top:0; }
+.owned-pass-wrap .pass-rules summary { min-height:44px; padding:12px 0; font-size:14px; }
+.owned-pass-wrap .pass-rules ul { color:var(--pass-soft); font-size:14px; }
+.owned-pass-wrap .mp-present { text-align:center; font-size:14px; padding:16px; margin:0; border-top:1px solid var(--pass-border); background:#ffffff70; }
+.owned-pass-wrap .mp-ticketbook { --pass-surface:#fffdf9; --pass-soft:#48565c; --pass-border:#b59973; }
+.owned-pass-wrap .mp-ticketbook .mp-hero { background:linear-gradient(135deg,#086777,#0a8190); color:#fff; padding-bottom:0; }
+.owned-pass-wrap .mp-ticketbook .mp-title { font-size:44px; }
+.owned-pass-wrap .mp-ticketbook .mp-scenery { height:84px; color:#b4e2e9; margin-top:0; }
+.owned-pass-wrap .mp-count { text-align:center; padding:24px 16px 22px; background:var(--pass-surface); }
+.owned-pass-wrap .mp-count-label { display:block; font-family:'Yu Mincho',serif; font-size:20px; }
+.owned-pass-wrap .mp-count-number { font-family:Georgia,serif; font-size:clamp(84px,27vw,132px); line-height:1.1; font-weight:500; font-variant-numeric:tabular-nums; }
+.owned-pass-wrap .mp-count-unit { font-family:'Yu Mincho',serif; font-size:36px; margin-left:8px; }
+.owned-pass-wrap .mp-ticketbook .mp-state { display:block; width:fit-content; margin:12px auto 0; }
+.owned-pass-wrap .mp-premium { --pass-ink:#ffe9b3; --pass-surface:#021c2b; --pass-soft:#e4d6b8; --pass-border:#ce9f4e; background:radial-gradient(ellipse at 70% 55%,#12344b,transparent 65%),#021c2b; border:3px double var(--pass-border); }
+.owned-pass-wrap .mp-premium:before { content:''; position:absolute; z-index:-1; inset:5px; border:1px solid var(--pass-border); border-radius:17px; pointer-events:none; }
+.owned-pass-wrap .mp-premium .mp-hero { padding:30px 18px 0; }
+.owned-pass-wrap .mp-premium .mp-title { font-size:28px; }
+.owned-pass-wrap .mp-premium-word { display:block; font-family:Georgia,serif; font-size:clamp(27px,8.4vw,39px); letter-spacing:.025em; margin:12px 0 0; color:#ffe3a5; }
+.owned-pass-wrap .mp-premium .mp-scenery { color:#d9ac65; height:150px; }
+.owned-pass-wrap .mp-premium .mp-present { background:#061f30; }
+.owned-pass-wrap .mp-book { display:flex; align-items:center; justify-content:center; gap:16px; min-height:52px; padding:14px 18px; margin:0 20px 20px; border:1px solid #f2cf8a; border-radius:12px; background:linear-gradient(110deg,#e4b966,#ffdea0,#dca749); color:#201b0d; font-size:17px; font-weight:700; text-decoration:none; }
+.owned-pass-wrap .mp-book:after { content:'›'; font-size:28px; line-height:1; }
+.owned-pass-wrap .mp-book:active { filter:brightness(.92); }
+.owned-pass-wrap .mp-book:focus-visible { outline:3px solid #fff; outline-offset:-6px; }
+.owned-pass-wrap #consentNav { display:grid; gap:12px; margin-top:24px; background:transparent; padding:0; border:0; box-shadow:none; }
+.owned-pass-wrap #consentNav a { width:100%; text-align:center; text-decoration:none; min-height:48px; display:flex; align-items:center; justify-content:center; margin:0; }
+.owned-pass-wrap #passLineAccountNotice { padding:0 8px; margin:22px 0; border:0; box-shadow:none; background:transparent; }
+.owned-pass-wrap #passLineAccountNotice p { text-align:center; color:var(--mp-muted); }
+.owned-pass-wrap #refreshPasses { width:100%; min-height:48px; }
+.owned-pass-wrap #reservationForm { scroll-margin-top:20px; }
+.owned-pass-wrap .btn { min-height:48px; }
+.owned-pass-wrap #loadingCard { min-height:160px; }
+body.mp-dark { background:#021522; }
+body.mp-dark .owned-pass-wrap { --mp-ink:#ffedc5; --mp-muted:#dfd7c8; }
+body.mp-dark .owned-pass-wrap #mainCard > .card { color:#061b2c; }
+body.mp-dark .owned-pass-wrap #memberInfo { color:#dfd7c8; }
+@media(max-width:360px) { .owned-pass-wrap { padding-inline:12px; } .owned-pass-wrap .mp-info { margin-inline:18px; } .owned-pass-wrap .mp-info dl { grid-template-columns:4.4em minmax(0,1fr); gap:12px 8px; } .owned-pass-wrap .mp-info dd { font-size:19px; } }
+@media(prefers-reduced-motion:reduce) { .owned-pass-wrap .spinner { animation:none; } }
+
+
+.owned-pass-wrap .reservation-row { flex-wrap:wrap; gap:12px; align-items:flex-start; }
+.owned-pass-wrap .reservation-row .info { flex:1 1 150px; }
+.owned-pass-wrap .reservation-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.owned-pass-wrap .reservation-actions .btn { min-height:44px; margin:0; padding:10px 12px; }
+.owned-pass-wrap #stopEditingReservation { width:100%; margin:12px 0 0; min-height:44px; }
+.owned-pass-wrap #changeRecovery .btn { margin:12px 0 0; width:100%; min-height:48px; }
+.owned-pass-wrap #editingReservationInfo { padding:12px; border:1px solid #abc9da; border-radius:8px; background:#eef7fc; color:#183d52; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap owned-pass-wrap">
   <div class="header">
-    <div class="logo">エキサイティングアイスパークin流山</div>
-    <h1 id="myPassHeading">マイパス</h1>
+    <div class="logo">EXCITING ICE PARK<small>IN NAGAREYAMA</small></div>
+    <h1 id="myPassHeading">保有パス</h1>
     <span class="badge-premium">パス確認・プレミアム予約</span>
   </div>
 
-  <section id="passLineAccountNotice" class="card" aria-label="LINEアカウントについて"><p class="muted">パスは登録したLINEアカウントに紐づきます。別のLINEアカウントでは表示・利用できません。登録するアカウントにご注意ください。</p></section>
+
   <div id="loadingCard" class="card center">
     <div class="spinner"></div>
     <div class="muted">読み込み中です…</div>
@@ -174,10 +243,11 @@
     <a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=passapply">LINEでシーズンパスを申し込む</a>
   </div>
 
-  <section class="card" id="consentNav"><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=passapply">シーズンパスを申し込む</a><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=reception">LINEで事前受付する</a><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=status">受付状況を確認する</a><a class="btn secondary" href="https://liff.line.me/2011760110-g8MzS4CT?view=consent">利用同意書を確認する</a></section>
+
 <div id="passSummary" class="hidden"><div id="passList"></div><button type="button" class="btn secondary" id="refreshPasses">パス情報を更新</button></div>
+  <section id="passLineAccountNotice" class="card" aria-label="LINEアカウントについて"><p class="muted">パスは受付時のLINEアカウントに紐づいております。</p></section>
 <div id="premiumNote" class="card hidden"><p class="muted">優先予約は有効なプレミアムパスをお持ちの方がご利用いただけます。</p></div>
-<div id="mainCard" class="hidden">
+<section id="changeRecovery" class="card hidden" aria-labelledby="changeRecoveryTitle"><h2 id="changeRecoveryTitle" class="section-title">予約変更の保存結果を確認</h2><p id="changeRecoveryMessage" class="muted" role="status"></p><button type="button" id="checkChange" class="btn secondary">保存結果を確認する</button><button type="button" id="retryChange" class="btn secondary hidden">同じ変更を再送する</button></section><div id="mainCard" class="hidden">
     <p id="memberInfo" class="muted"></p>
     <div class="card">
       <div class="section-title">プレミアムパスのご予約状況</div>
@@ -187,14 +257,16 @@
     </div>
 
     <div class="card">
-      <div class="section-title">新しくご予約する</div>
-      <p class="muted" id="maxActiveNote">ご予約は翌日以降、同時に3件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。</p>
+      <div id="reservationForm" tabindex="-1"><div class="section-title">新しくご予約する</div></div>
+      <p class="muted" id="maxActiveNote">ご予約・変更・キャンセルは利用日の営業開始30分前まで（締切ちょうどを含む）承れます。同時に3件まで予約できます。ご予約なしでも通常の受付列からご利用いただけます。</p>
+<p id="editingReservationInfo" class="muted hidden" role="status"></p><button type="button" id="stopEditingReservation" class="btn secondary hidden">変更をやめる</button>
 
       <label for="reserveDate">ご希望日</label>
       <div class="date-input-frame"><input type="date" id="reserveDate"></div>
 
       <div id="slotsArea"></div>
 
+      
       <button class="btn" id="reserveBtn" disabled>この時間でご予約する</button>
       <div class="error-msg hidden" id="reserveError"></div>
       <div class="ok-msg hidden" id="reserveOk"></div>
@@ -204,6 +276,8 @@
 
 <p style="text-align:center;color:#08386B;font-size:12px">マイパス</p><main id="customerPortal" class="wrap hidden"></main>
 <script>
+document.querySelector(".owned-pass-wrap").appendChild(document.createRange().createContextualFragment("  <section class=\"card\" id=\"consentNav\"><a class=\"btn secondary\" href=\"https://liff.line.me/2011760110-g8MzS4CT?view=passapply\">シーズンパスを申し込む</a><a class=\"btn secondary\" href=\"https://liff.line.me/2011760110-g8MzS4CT?view=reception\">LINEで事前受付する</a><a class=\"btn secondary\" href=\"https://liff.line.me/2011760110-g8MzS4CT?view=status\">受付状況を確認する</a><a class=\"btn secondary\" href=\"https://liff.line.me/2011760110-g8MzS4CT?view=consent\">利用同意書を確認する</a></section>"));
+
 (function () {
   window.startCustomerPortal = function (config) {
     if (config.view !== 'consent') return;
@@ -390,6 +464,7 @@
   var LIFF_ID = '2011760110-g8MzS4CT';
   var BASE_URL = 'https://script.google.com/macros/s/AKfycbxnVPoA358IJnGigvorj4R3nIIlz-bpVS_BFqpktKImhtKZfQlMsNHg7xu598O0knJ6/exec';
   var selectedSlot = null, slotLoadId = 0, mutationPending = false, pass = null;
+  var editingReservation=null, pendingChange=null, changeStorageKey='';
   function $(id) { return document.getElementById(id); }
   function show(el) { el.classList.remove('hidden'); }
   function hide(el) { el.classList.add('hidden'); }
@@ -416,55 +491,106 @@
     }).finally(function () { clearTimeout(timer); });
   }
   function renderReservations(list) {
-    var box = $('reservationList'); box.textContent = '';
-    if (!list.length) { show($('reservationEmpty')); return; }
-    hide($('reservationEmpty'));
-    list.forEach(function (r) {
-      var row = document.createElement('div'); row.className = 'reservation-row';
-      var info = document.createElement('div'); info.className = 'info';
-      var date = document.createElement('div'); date.className = 'date'; date.textContent = r.reservationLabel || r.dateJpLabel + r.slotStart + '~' + r.slotEnd;
-      info.appendChild(date); row.appendChild(info);
-      var btn = document.createElement('button'); btn.className = 'btn secondary'; btn.textContent = 'キャンセル';
-      btn.addEventListener('click', function () {
-        if (mutationPending || !window.confirm(r.dateJpLabel + ' ' + r.slotStart + 'の予約を取り消しますか？')) return;
-        mutationPending = true; btn.disabled = true;
-        api('cancel', {reservationId:r.reservationId}).then(function () { return loadMember(); })
-          .catch(function (e) { error(e.message); })
-          .finally(function () { mutationPending = false; btn.disabled = false; });
-      });
-      row.appendChild(btn); box.appendChild(row);
+    var box=$('reservationList'); box.textContent='';
+    if(!list.length){show($('reservationEmpty'));return;}hide($('reservationEmpty'));
+    list.forEach(function(r){
+      var row=document.createElement('div');row.className='reservation-row';
+      var info=document.createElement('div');info.className='info';
+      var label=document.createElement('div');label.className='date';label.textContent=r.reservationLabel||r.dateJpLabel+r.slotStart+'〜'+r.slotEnd;info.appendChild(label);row.appendChild(info);
+      var actions=document.createElement('div');actions.className='reservation-actions';
+      var change=document.createElement('button');change.type='button';change.className='btn secondary';change.dataset.action='change';change.textContent='日時を変更';change.dataset.unavailable=(!r.changeVersion||r.canChange===false)?'1':'0';
+      change.addEventListener('click',function(){
+        if(mutationPending||pendingChange)return;
+        editingReservation=r;show($('editingReservationInfo'));show($('stopEditingReservation'));
+        $('editingReservationInfo').textContent='変更前：'+label.textContent+' ／ 予約番号 '+r.reservationId+'。変更先の日時を選んでください。';
+        $('reservationForm').firstElementChild.textContent='予約日時を変更する';$('reserveBtn').textContent='この日時に変更する';
+        $('reserveDate').value=r.dateLabel >= $('reserveDate').min ? r.dateLabel : $('reserveDate').min;
+        hide($('reserveError'));hide($('reserveOk'));loadSlots();$('reservationForm').scrollIntoView({block:'start'});$('reserveDate').focus({preventScroll:true});
+      });actions.appendChild(change);
+      var cancel=document.createElement('button');cancel.type='button';cancel.className='btn secondary';cancel.dataset.action='cancel';cancel.textContent=r.canCancel===false?'キャンセル締切後':'キャンセル';cancel.dataset.unavailable=r.canCancel===false?'1':'0';
+      cancel.addEventListener('click',function(){
+        if(mutationPending||pendingChange||!window.confirm(r.dateJpLabel+' '+r.slotStart+'の予約を取り消しますか？'))return;
+        mutationPending=true;lockReservationChange();
+        api('cancel',{reservationId:r.reservationId}).then(function(){if(editingReservation&&editingReservation.reservationId===r.reservationId)clearEditingReservation();return loadMember();}).catch(function(e){error(e.message);}).finally(function(){mutationPending=false;lockReservationChange();});
+      });actions.appendChild(cancel);row.appendChild(actions);box.appendChild(row);
+    });lockReservationChange();
+  }
+  function clearEditingReservation(){editingReservation=null;hide($('editingReservationInfo'));hide($('stopEditingReservation'));$('reservationForm').firstElementChild.textContent='新しくご予約する';$('reserveBtn').textContent='この時間でご予約する';}
+  function lockReservationChange(){
+    var locked=mutationPending||!!pendingChange;
+    $('reserveDate').disabled=locked;$('reserveBtn').disabled=locked||!selectedSlot;
+    $('stopEditingReservation').disabled=locked;
+    document.querySelectorAll('.reservation-actions button').forEach(function(b){b.disabled=locked||b.dataset.unavailable==='1';});
+    $('refreshReservations').disabled=mutationPending;$('refreshPasses').disabled=mutationPending;
+    $('checkChange').disabled=mutationPending;$('retryChange').disabled=mutationPending;
+  }
+  function storeReservationChange(){try{if(changeStorageKey){if(pendingChange)sessionStorage.setItem(changeStorageKey,JSON.stringify(pendingChange));else sessionStorage.removeItem(changeStorageKey);}}catch(e){}}
+  function restoreReservationChange(data){
+    if(!data.ownerKey)return;
+    var key='icepark.premium.change.'+data.ownerKey;
+    if(changeStorageKey&&changeStorageKey!==key)pendingChange=null;
+    changeStorageKey=key;
+    if(!pendingChange){try{var saved=JSON.parse(sessionStorage.getItem(key)||'null');if(saved&&typeof saved.reservationId==='string'&&typeof saved.date==='string'&&typeof saved.slotStart==='string'&&typeof saved.changeVersion==='string'&&saved.operationMeta)pendingChange=saved;}catch(e){}}
+    if(pendingChange){show($('changeRecovery'));$('changeRecoveryMessage').textContent='送信中または保存結果が未確認です。別の変更を送らず、保存結果を確認してください。';hide($('retryChange'));}else hide($('changeRecovery'));
+    lockReservationChange();
+  }
+  function newChangeMeta(){var bytes=new Uint8Array(16);window.crypto.getRandomValues(bytes);return {requestId:Array.from(bytes,function(n){return n.toString(16).padStart(2,'0');}).join(''),issuedAt:Date.now()};}
+  function completedReservationChange(result){pendingChange=null;storeReservationChange();hide($('changeRecovery'));hide($('retryChange'));clearEditingReservation();return loadMember().catch(function(e){error('変更は保存済みですが、最新表示を取得できませんでした。'+e.message);}).then(function(){$('reserveOk').textContent=(result.changed?'予約日時を変更しました。':'同じ日時のため予約内容は変わりません。')+' 予約番号：'+result.reservationId+(result.current?' ／ '+result.current:'')+(result.notificationFailed?' LINE通知を送れませんでしたが、変更は保存されています。':'');show($('reserveOk'));});}
+  function checkReservationChange(originalError){
+    if(!pendingChange)return Promise.resolve();
+    return api('rescheduleStatus',{operationMeta:pendingChange.operationMeta}).then(function(r){
+      if(r.state==='DONE')return completedReservationChange(r.result);
+      show($('changeRecovery'));
+      if(r.state==='NOT_FOUND' && r.retryAllowed===false){pendingChange=null;storeReservationChange();hide($('changeRecovery'));clearEditingReservation();return loadMember().then(function(){error('保存記録がなく、変更操作の期限を過ぎています。最新の予約を確認してから、改めて日時を変更してください。');});}
+      if(r.state==='REJECTED'){pendingChange=null;storeReservationChange();hide($('changeRecovery'));clearEditingReservation();return loadMember().then(function(){error(r.message||'変更は保存されませんでした。予約状況を確認してください。');});}
+      $('changeRecoveryMessage').textContent=r.state==='NOT_FOUND'?'保存記録がありません。同じ操作番号・同じ日時で再送できます。':r.message||'保存結果が未確認です。再送せず受付スタッフへご相談ください。';
+      if(r.state==='NOT_FOUND')show($('retryChange'));else hide($('retryChange'));
+    }).catch(function(e){show($('changeRecovery'));hide($('retryChange'));$('changeRecoveryMessage').textContent='保存結果を確認できません。通信が戻ったら「保存結果を確認する」を押してください。';error((originalError?originalError.message+' ':'')+e.message);});
+  }
+  function sendReservationChange(){return api('reschedule',pendingChange).then(completedReservationChange).catch(checkReservationChange);}
+  function runReservationChange(fn){if(mutationPending)return;mutationPending=true;lockReservationChange();return Promise.resolve().then(fn).finally(function(){mutationPending=false;lockReservationChange();});}
+  // Display-only mapping: canonical plan keys and authenticated payload stay unchanged.
+  function renderOwnedPasses(passes) {
+    var cards=$('passList'); cards.textContent='';
+    document.body.classList.toggle('mp-dark',passes.length===1 && String(passes[0].planName).indexOf('プレミアムパス')!==-1);
+    function el(tag,cls,text,parent){var n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;if(parent)parent.appendChild(n);return n;}
+    function scenery(){var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 400 160');svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');svg.classList.add('mp-scenery');
+      var trees='';[12,40,72,110,300,338,370,395].forEach(function(x,i){var y=25+(i%3)*13,s=0.7+(i%3)*0.15;trees+='<g transform="translate('+x+' '+y+') scale('+s+')"><path d="M0 0L-14 27H-7L-23 49H-12L-30 75H30L12 49H23L7 27H14Z"/><path d="M0 8V95M-12 31L0 40L12 31M-19 55L0 66L19 55"/></g>';});
+      svg.innerHTML='<g fill="currentColor" fill-opacity=".10" stroke="currentColor" stroke-width="1">'+trees+'</g><g fill="none" stroke="currentColor" opacity=".5"><path d="M0 124Q100 107 200 122T400 119M0 139Q160 120 400 145M0 152Q200 130 400 155"/><path d="M200 122L40 160M245 123L340 160M120 126L150 160" opacity=".4"/></g><g fill="currentColor" opacity=".6"><circle cx="40" cy="13" r="1"/><circle cx="150" cy="37" r="1.3"/><circle cx="265" cy="23" r="1"/><circle cx="353" cy="14" r="1.4"/></g>';return svg;}
+    passes.forEach(function(p){
+      var raw=String(p.planName||''),kind=raw.indexOf('プレミアムパス')!==-1?'premium':raw.indexOf('10回券')!==-1?'ticketbook':raw.indexOf('平日')!==-1?'weekday':'other';
+      var name=kind==='weekday'?'平日FREEパス':kind==='ticketbook'?'10回券':kind==='premium'?'プレミアムパス':raw;
+      var card=el('article','card pass-card mp-'+kind,undefined,cards);card.setAttribute('aria-label',name+'・'+(p.holderName||''));
+      var hero=el('div','mp-hero',undefined,card);
+      if(kind==='weekday'){var icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 64 64');icon.setAttribute('aria-hidden','true');icon.classList.add('mp-calendar');icon.innerHTML='<g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="7" y="13" width="50" height="45" rx="5"/><path d="M7 27H57M20 6V20M44 6V20M18 37H22M30 37H34M42 37H46M18 47H22M30 47H34M42 47H46"/></g>';hero.appendChild(icon);}
+      el('p','mp-kicker',kind==='premium'?'PREMIUM MEMBER':kind==='ticketbook'?'10 TICKET PASS':kind==='weekday'?'WEEKDAY FREE PASS':'SEASON PASS',hero);
+      el('h2','mp-title',name,hero);if(kind==='premium')el('strong','mp-premium-word','PREMIUM PASS',hero);
+      if(kind!=='ticketbook')el('p','mp-state',p.statusLabel==='有効'?'保有中':(p.statusLabel||'状態確認中'),hero);
+      hero.appendChild(scenery());
+      if(kind==='ticketbook'){var count=el('div','mp-count',undefined,card);el('span','mp-count-label','残り',count);el('strong','mp-count-number',p.remainingUses===null||p.remainingUses===undefined?'—':String(p.remainingUses),count);el('span','mp-count-unit','回',count);el('div','mp-state',p.statusLabel==='有効'?'保有中':(p.statusLabel||'状態確認中'),count);}
+      var info=el('div','mp-info',undefined,card),dl=el('dl','',undefined,info);
+      function entry(label,value){el('dt','',label,dl);el('dd','',value,dl);}
+      entry('お名前',p.holderName||'—');entry('有効期限',p.validTo?String(p.validTo).replace(/-/g,'/'):'—');
+      el('p','mp-meta',raw+' ／ パス番号 '+(p.passNo||'—')+(p.validFrom?' ／ 利用開始 '+String(p.validFrom).replace(/-/g,'/'):'')+' ／ 利用可能日：'+(p.usableDays||'全日'),info);
+      if(Array.isArray(p.rules)&&p.rules.length){var wrap=el('div','mp-rule-wrap',undefined,card),details=el('details','pass-rules',undefined,wrap);el('summary','','このパスの利用ルール',details);var list=el('ul','',undefined,details);p.rules.forEach(function(rule){el('li','',rule,list);});}
+      if(kind==='premium'&&p.canReserve&&pass&&p.passNo===pass.passNo){var a=el('a','mp-book','滑走予約をする',card);a.href='#reservationForm';a.addEventListener('click',function(){setTimeout(function(){$('reserveDate').focus({preventScroll:true});},0);});}
+      el('p','mp-present','受付でこの画面をご提示ください',card);
     });
   }
   function loadMember() {
     return api('bootstrap', {date:$('reserveDate').value || undefined}).then(function (data) {
       hide($('loadingCard'));
+      restoreReservationChange(data);
       pass = data.pass;
       var passes = data.passes || (pass ? [{passNo:pass.passNo,holderName:pass.holderName,planName:'プレミアムパス',validTo:pass.validTo,remainingUses:null,statusLabel:'有効'}] : []);
-      var cards = $('passList'); cards.textContent = '';
-      passes.forEach(function (p) {
-        var card = document.createElement('div'); card.className = 'card pass-card';
-        var title = document.createElement('div'); title.className = 'section-title'; title.textContent = p.planName; card.appendChild(title);
-        [p.holderName + ' 様 ／ ' + p.passNo,
-          '有効期間：' + (p.validFrom ? p.validFrom.replace(/-/g,'/') + '〜' : '') + p.validTo.replace(/-/g,'/'),
-          '残り回数：' + (p.remainingUses === null ? '無制限' : p.remainingUses + '回'),
-          '利用可能日：' + (p.usableDays || '全日'), '状態：' + p.statusLabel].forEach(function (text) {
-          var line = document.createElement('p'); line.className = 'muted'; line.textContent = text; card.appendChild(line);
-        });
-        if (Array.isArray(p.rules) && p.rules.length) {
-          var details = document.createElement('details'); details.className = 'pass-rules';
-          var summary = document.createElement('summary'); summary.textContent = 'このパスの利用ルール'; details.appendChild(summary);
-          var list = document.createElement('ul');
-          p.rules.forEach(function (rule) { var item = document.createElement('li'); item.textContent = rule; list.appendChild(item); });
-          details.appendChild(list); card.appendChild(details);
-        }
-        cards.appendChild(card);
-      });
+      renderOwnedPasses(passes);
       if (passes.length) show($('passSummary')); else hide($('passSummary'));
       if (!pass) { hide($('mainCard')); if(passes.length){hide($('notMemberCard'));show($('premiumNote'));}else{show($('notMemberCard'));hide($('premiumNote'));}return false; }
       hide($('premiumNote'));
       hide($('notMemberCard')); show($('mainCard'));
       $('memberInfo').textContent = pass.holderName + ' 様 ／ パス番号 ' + pass.passNo;
-      $('maxActiveNote').textContent = 'ご予約は翌日以降、同時に' + data.maxActive + '件まで承れます。ご予約なしでも通常の受付列からご利用いただけます。';
+      $('maxActiveNote').textContent = 'ご予約・キャンセルは利用日の営業開始30分前まで（締切ちょうどを含む）承れます。同時に' + data.maxActive + '件まで予約できます。ご予約なしでも通常の受付列からご利用いただけます。';
+      data.tomorrow = data.earliestDate || data.tomorrow;
       $('reserveDate').min = data.tomorrow; $('reserveDate').max = pass.validTo;
       if (!$('reserveDate').value || $('reserveDate').value < data.tomorrow || $('reserveDate').value > pass.validTo) $('reserveDate').value = data.tomorrow;
       renderReservations(data.reservations);
@@ -484,13 +610,13 @@
       btn.textContent = s.start + '〜' + s.end;
       var remaining = document.createElement('span'); remaining.className = 'remaining'; remaining.textContent = s.remaining > 0 ? '空き ' + s.remaining : '満枠'; btn.appendChild(remaining);
       btn.addEventListener('click', function () {
-        if (mutationPending) return;
+        if (mutationPending || pendingChange) return;
         grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
-        btn.classList.add('selected'); selectedSlot = s.start; $('reserveBtn').disabled = false;
+        btn.classList.add('selected'); selectedSlot = s.start; lockReservationChange();
       });
       grid.appendChild(btn);
     });
-    area.appendChild(grid);
+    area.appendChild(grid);lockReservationChange();
   }
   function loadSlots() {
     selectedSlot = null; $('reserveBtn').disabled = true;
@@ -511,7 +637,13 @@
   });
   $('refreshPasses').addEventListener('click', function () { if (!mutationPending) loadMember().catch(function (e) { fatal(e.message); }); });
   $('reserveBtn').addEventListener('click', function () {
-    if (mutationPending || !selectedSlot || !pass) return;
+    if (mutationPending || pendingChange || !selectedSlot || !pass) return;
+    if(editingReservation){
+      if(!window.confirm('予約番号 '+editingReservation.reservationId+' を '+$('reserveDate').value+' '+selectedSlot+' に変更しますか？'))return;
+      pendingChange={reservationId:editingReservation.reservationId,changeVersion:editingReservation.changeVersion,date:$('reserveDate').value,slotStart:selectedSlot,operationMeta:newChangeMeta()};
+      storeReservationChange();show($('changeRecovery'));$('changeRecoveryMessage').textContent='変更を保存中です…';hide($('retryChange'));hide($('reserveError'));hide($('reserveOk'));
+      runReservationChange(sendReservationChange);return;
+    }
     var date = $('reserveDate').value, slot = selectedSlot;
     mutationPending = true; $('reserveBtn').disabled = true; $('reserveDate').disabled = true;
     $('reserveBtn').textContent = '予約を確認中…'; hide($('reserveError')); hide($('reserveOk'));
@@ -520,8 +652,11 @@
         (result.notificationFailed ? ' LINE通知を送れませんでしたが、予約は完了しています。' : '');
       show($('reserveOk')); return loadMember();
     }).catch(function (e) { error(e.message); })
-      .finally(function () { mutationPending = false; $('reserveDate').disabled = false; $('reserveBtn').textContent = 'この時間でご予約する'; $('reserveBtn').disabled = !selectedSlot; });
+      .finally(function () { mutationPending = false; $('reserveDate').disabled = false; $('reserveBtn').textContent = 'この時間でご予約する'; lockReservationChange(); });
   });
+  $('stopEditingReservation').addEventListener('click',function(){if(mutationPending||pendingChange)return;clearEditingReservation();loadSlots();});
+  $('checkChange').addEventListener('click',function(){runReservationChange(checkReservationChange);});
+  $('retryChange').addEventListener('click',function(){if(!pendingChange||!window.confirm('同じ予約変更を再送しますか？'))return;runReservationChange(sendReservationChange);});
   var initializationStopped = false;
   var timer = setTimeout(function () { initializationStopped = true; fatal('LINEとの接続が完了しませんでした。画面を閉じ、LINEから開き直してください。'); }, 20000);
   function stop(message) { clearTimeout(timer); fatal(message); }
@@ -544,8 +679,8 @@
           window.startCustomerPortal({view:new URLSearchParams(window.location.search).get('view'),liffId:LIFF_ID,baseUrl:BASE_URL});
           return;
         }
-$('loadingCard').textContent = 'プレミアムパスを確認中…';
-      return loadMember();
+$('loadingCard').textContent = '保有パスを確認中…';
+      return loadMember().then(function(){if(pendingChange)return runReservationChange(checkReservationChange);});
     }).catch(function (e) { if (!initializationStopped) stop(e.message || 'LINE接続に失敗しました。LINEから開き直してください。'); });
   }
   var sdk = document.createElement('script'); sdk.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js'; sdk.async = true;
@@ -556,3 +691,4 @@ $('loadingCard').textContent = 'プレミアムパスを確認中…';
 </script>
 </body>
 </html>
+
